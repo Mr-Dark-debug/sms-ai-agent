@@ -232,7 +232,14 @@ class SMSHandler:
             )
         
         # Validate phone number
+        original_phone = phone_number
         phone_number = self._normalize_phone_number(phone_number)
+        
+        if not phone_number:
+            raise SMSError(
+                f"Invalid phone number: '{original_phone}' contains no numeric digits",
+                details={"original": original_phone}
+            )
         
         # Build command
         cmd = [self.termux_api_path]
@@ -629,6 +636,28 @@ class SMSHandler:
         
         return results
     
+    def is_replyable_number(self, phone: str) -> bool:
+        """
+        Check if a phone number is a real numeric number that can be replied to.
+        Alphanumeric headers (like 'AD-AIRTEL') are not replyable.
+        
+        Args:
+            phone: Phone number or sender ID
+            
+        Returns:
+            True if it's a numeric phone number
+        """
+        if not phone:
+            return False
+        # Remove common separators
+        clean = re.sub(r'[-\s()]', '', phone)
+        # Check if it's mostly digits (allowing for leading +)
+        # Indian numbers might be 10 digits or 12 with 91
+        # Alphanumeric headers are usually 6 characters or have letters
+        if clean.startswith('+'):
+            return clean[1:].isdigit()
+        return clean.isdigit()
+
     def _normalize_phone_number(self, phone: str) -> str:
         """
         Normalize phone number format.

@@ -135,6 +135,11 @@ def create_app(
     def handle_incoming_sms(msg):
         logger.info(f"Web listener: Received message from {msg.phone_number}")
         
+        # Check if number is replyable (numeric)
+        if not sms_handler.is_replyable_number(msg.phone_number):
+            logger.info(f"Web listener: Ignoring non-replyable sender {msg.phone_number}")
+            return
+
         # Clean the message content
         content = msg.message.strip()
         if content.startswith("Sent:"):

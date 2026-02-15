@@ -597,6 +597,11 @@ def run_daemon(config: Config) -> None:
     def handle_message(msg):
         logger.info(f"Daemon: Received message from {msg.phone_number}: {msg.message[:50]}")
         
+        # Check if number is replyable (numeric)
+        if not sms_handler.is_replyable_number(msg.phone_number):
+            logger.info(f"Daemon: Ignoring non-replyable sender {msg.phone_number}")
+            return
+
         # Clean the message content
         content = msg.message.strip()
         if content.startswith("Sent:"):
