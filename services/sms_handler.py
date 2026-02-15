@@ -337,6 +337,8 @@ class SMSHandler:
         if offset:
             cmd.extend(["-o", str(offset)])
         
+        logger.debug(f"Executing command: {' '.join(cmd)}")
+        
         try:
             result = subprocess.run(
                 cmd,
@@ -352,6 +354,7 @@ class SMSHandler:
             # Parse JSON response
             try:
                 messages_data = json.loads(result.stdout)
+                logger.debug(f"Parsed {len(messages_data)} messages from Termux")
             except json.JSONDecodeError:
                 raise SMSError("Failed to parse SMS list response")
             
@@ -463,20 +466,27 @@ class SMSHandler:
         while self._running:
             poll_count += 1
             try:
-                # Get recent messages
-                messages = self.list_messages(limit=20)
-                logger.debug(f"Poll #{poll_count}: Found {len(messages)} total messages")
+                # Get more recent messages to ensure we don't miss any during high volume
+                messages = self.list_messages(limit=50)
+                
+                # termux-sms-list usually returns newest first. 
+                # We reverse to process in chronological order.
+                messages.reverse()
                 
                 new_incoming = []
+                incoming_count = 0
                 
                 for msg in messages:
                     # Only process incoming messages (Inbox)
                     if msg.direction != "incoming":
                         continue
                     
+                    incoming_count += 1
+                    
                     # Create more robust unique ID using message content
                     content_preview = msg.message[:50] if msg.message else ""
                     unique_string = f"{msg.phone_number}|{msg.timestamp.isoformat()}|{content_preview}"
+                    import hashlib
                     msg_id = hashlib.sha256(unique_string.encode()).hexdigest()[:16]
                     
                     if msg_id not in seen_ids:
@@ -492,6 +502,9 @@ class SMSHandler:
                             # Trigger webhook if enabled
                             if self.webhook_config.get("enabled"):
                                 self._trigger_webhook(msg)
+                
+                if poll_count % 10 == 0 or new_incoming:
+                    logger.debug(f"Poll #{poll_count}: Checked {len(messages)} total, {incoming_count} incoming, {len(new_incoming)} NEW")
                 
                 # Process new messages through callbacks
                 if new_incoming:
