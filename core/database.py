@@ -362,7 +362,7 @@ class Database:
                     SELECT direction, message, timestamp
                     FROM messages
                     WHERE phone_number = ?
-                    ORDER BY timestamp DESC
+                    ORDER BY id DESC
                     LIMIT ?
                     """,
                     (phone_number, max_messages)

@@ -116,7 +116,7 @@ class AIResponder:
                 logger.warning(f"Failed to initialize LLM: {e}")
         
         # Response history for context
-        self.max_context_messages = 10
+        self.max_context_messages = 20
     
     def _load_instructions(self, path: Optional[str], default_name: str) -> str:
         """
@@ -352,31 +352,25 @@ class AIResponder:
         messages = []
         
         # System message
-        system_content = f"### YOUR PERSONA\n{self.personality}\n\n### OPERATIONAL GUIDELINES\n{self.agent_rules}"
-        system_content += "\n\n### CRITICAL: HUMAN-LIKE BEHAVIOR"
-        system_content += "\n- DO NOT sound like an AI assistant. Avoid phrases like 'How can I help you today?' or 'I am here to assist'."
-        system_content += "\n- Talk like a real person sending an SMS. Use casual language, occasional abbreviations, and match the user's energy/vibe."
-        system_content += "\n- If the user is casual, be casual. If they are brief, be brief."
-        system_content += "\n- Be helpful but keep it natural and conversational, like a friend or a personal assistant would."
+        system_content = f"### YOUR HUMAN PERSONA\n{self.personality}\n\n### OPERATIONAL GUIDELINES\n{self.agent_rules}"
+        system_content += "\n\n### CRITICAL: CONVERSATION STYLE"
+        system_content += "\n- You speak HINGLISH (Hindi + English) naturally. Use Hindi words like 'arey', 'bhai', 'yaar', 'scene' frequently if the user does."
+        system_content += "\n- NEVER sound like a bot. If you don't understand something, say it like a human would (e.g., 'kya bol raha hai yaar?')."
+        system_content += "\n- REMEMBER THE HISTORY. Use the messages below to stay in context. Don't repeat what you already said."
         
         # Add contact-specific context if available
         contact = self.database.get_contact(phone_number)
         if contact:
-            system_content += "\n\n### RECIPIENT INFORMATION (CRITICAL)"
-            system_content += f"\nYou are currently responding to {phone_number}."
+            system_content += "\n\n### RECIPIENT INFO"
+            system_content += f"\n- Phone: {phone_number}"
             if contact.get("name"):
-                system_content += f"\n- Name of person: {contact['name']}"
+                system_content += f"\n- Name: {contact['name']}"
             if contact.get("relation"):
-                system_content += f"\n- Your relationship to this person: {contact['relation']}"
-            if contact.get("age"):
-                system_content += f"\n- Age: {contact['age']}"
+                system_content += f"\n- Relation: {contact['relation']}"
             if contact.get("custom_prompt"):
-                system_content += f"\n- IMPORTANT INSTRUCTIONS FOR THIS CONTACT: {contact['custom_prompt']}"
-            
-            system_content += "\n\nYou MUST adapt your tone and style based on the relationship and personality described above."
+                system_content += f"\n- Special Note: {contact['custom_prompt']}"
         
-        system_content += f"\n\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"
-        system_content += f"\nKeep your response under {self.config.guardrail.max_response_length} characters."
+        system_content += f"\n\nToday's Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
         
         messages.append(Message(role="system", content=system_content))
         
@@ -386,9 +380,13 @@ class AIResponder:
             max_messages=self.max_context_messages
         )
         
-        for msg in history:
-            role = "user" if msg["direction"] == "incoming" else "assistant"
-            messages.append(Message(role=role, content=msg["message"]))
+        if history:
+            # Tell the LLM this is history
+            messages.append(Message(role="system", content="--- PREVIOUS MESSAGES IN THIS CONVERSATION ---"))
+            for msg in history:
+                role = "user" if msg["direction"] == "incoming" else "assistant"
+                messages.append(Message(role=role, content=msg["message"]))
+            messages.append(Message(role="system", content="--- END OF HISTORY. RESPOND TO THE LATEST MESSAGE BELOW ---"))
         
         # Add current message
         messages.append(Message(role="user", content=incoming_message))
