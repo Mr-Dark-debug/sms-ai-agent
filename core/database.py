@@ -162,6 +162,17 @@ class Database:
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         
+        -- Contacts table: stores per-number personality and instructions
+        CREATE TABLE IF NOT EXISTS contacts (
+            phone_number TEXT PRIMARY KEY,
+            name TEXT,
+            relation TEXT,
+            age INTEGER,
+            custom_prompt TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        
         -- Guardrail logs table: stores guardrail violations
         CREATE TABLE IF NOT EXISTS guardrail_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -606,6 +617,50 @@ class Database:
                 )
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to set setting: {e}")
+    
+    # === Contact Operations ===
+    
+    def upsert_contact(
+        self,
+        phone_number: str,
+        name: Optional[str] = None,
+        relation: Optional[str] = None,
+        age: Optional[int] = None,
+        custom_prompt: Optional[str] = None
+    ) -> None:
+        """
+        Add or update contact information.
+        """
+        try:
+            with self.transaction() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO contacts (phone_number, name, relation, age, custom_prompt, updated_at)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(phone_number) DO UPDATE SET
+                        name = COALESCE(excluded.name, name),
+                        relation = COALESCE(excluded.relation, relation),
+                        age = COALESCE(excluded.age, age),
+                        custom_prompt = COALESCE(excluded.custom_prompt, custom_prompt),
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (phone_number, name, relation, age, custom_prompt)
+                )
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to upsert contact: {e}")
+            
+    def get_contact(self, phone_number: str) -> Optional[Dict[str, Any]]:
+        """Get contact info for a phone number."""
+        try:
+            with self.transaction() as conn:
+                cursor = conn.execute(
+                    "SELECT * FROM contacts WHERE phone_number = ?",
+                    (phone_number,)
+                )
+                row = cursor.fetchone()
+                return dict(row) if row else None
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to get contact: {e}")
     
     # === Guardrail Log Operations ===
     

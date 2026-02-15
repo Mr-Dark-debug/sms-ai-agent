@@ -119,6 +119,7 @@ async def chat_history_page(request: Request, phone: str):
     database = request.app.state.database
     
     history = database.get_messages(phone_number=phone, limit=100, order_desc=False)
+    contact = database.get_contact(phone)
     
     return templates.TemplateResponse(
         "history.html",
@@ -126,6 +127,7 @@ async def chat_history_page(request: Request, phone: str):
             "request": request,
             "phone": phone,
             "history": history,
+            "contact": contact,
             "page": "messages"
         }
     )
@@ -247,6 +249,41 @@ async def personality_page(request: Request):
 
 
 # === API Routes ===
+
+class ContactUpdate(BaseModel):
+    """Contact info update model."""
+    phone_number: str
+    name: Optional[str] = None
+    relation: Optional[str] = None
+    age: Optional[int] = None
+    custom_prompt: Optional[str] = None
+
+
+@router.post("/api/contacts")
+async def update_contact(request: Request, contact_data: ContactUpdate):
+    """Update or create a contact."""
+    database = request.app.state.database
+    try:
+        database.upsert_contact(
+            phone_number=contact_data.phone_number,
+            name=contact_data.name,
+            relation=contact_data.relation,
+            age=contact_data.age,
+            custom_prompt=contact_data.custom_prompt
+        )
+        return {"success": True, "message": "Contact updated"}
+    except Exception as e:
+        logger.error(f"Failed to update contact: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/contacts/{phone}")
+async def get_contact(request: Request, phone: str):
+    """Get contact details."""
+    database = request.app.state.database
+    contact = database.get_contact(phone)
+    return contact or {}
+
 
 class SettingsUpdate(BaseModel):
     """Settings update model."""

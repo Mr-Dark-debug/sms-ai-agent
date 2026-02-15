@@ -360,6 +360,20 @@ Avoid:
         
         # System message
         system_content = f"{self.personality}\n\n{self.agent_rules}"
+        
+        # Add contact-specific context if available
+        contact = self.database.get_contact(phone_number)
+        if contact:
+            system_content += "\n\n### CURRENT CONVERSATION CONTEXT"
+            if contact.get("name"):
+                system_content += f"\n- Talking to: {contact['name']}"
+            if contact.get("relation"):
+                system_content += f"\n- Relation: {contact['relation']}"
+            if contact.get("age"):
+                system_content += f"\n- Age: {contact['age']}"
+            if contact.get("custom_prompt"):
+                system_content += f"\n- Specific Instructions: {contact['custom_prompt']}"
+        
         system_content += f"\n\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"
         system_content += f"\nKeep your response under {self.config.guardrail.max_response_length} characters."
         
