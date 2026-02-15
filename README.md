@@ -80,6 +80,16 @@ SMS AI Agent is a modular, secure SMS auto-responder for Android devices running
 - 🖥️ **Dual UI** - Web UI (FastAPI) and Terminal UI (Textual)
 - 💾 **SQLite Storage** - Message history, logs, and settings persistence
 - 🔄 **Auto-start** - Termux:Boot integration for device startup
+- 👤 **Contact Personalization** - Set specific AI instructions, names, and relations for individual phone numbers.
+
+### 👤 Contact Personalization & Per-Number AI
+
+You can now customize how the AI interacts with specific people in your life. By setting contact-specific metadata, the AI gains awareness of who it is talking to and how it should behave.
+
+- **Name & Relation**: Tell the AI who the person is (e.g., "John - Brother").
+- **Custom Prompts**: Provide unique instructions per number (e.g., "Be very respectful to my Boss" or "Use lots of emojis with my Best Friend").
+- **Smart Context**: These details are injected directly into the system prompt for highly personalized responses.
+- **Robust Tracking**: The system tracks `responded` status for every message, ensuring it never replies twice to the same text or gets stuck in a self-reply loop.
 
 ### ⚠️ Important: What This App Does
 

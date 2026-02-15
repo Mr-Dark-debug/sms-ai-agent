@@ -135,6 +135,11 @@ def create_app(
     def handle_incoming_sms(msg):
         logger.info(f"Web listener: Received message from {msg.phone_number}")
         
+        # Check if we already responded to this message content from this number (idempotency)
+        if database.was_message_responded(msg.phone_number, msg.message):
+            logger.info(f"Web listener: Already responded to this message from {msg.phone_number}, skipping.")
+            return
+
         # Check rate limit
         result = rate_limiter.check_and_record(msg.phone_number)
         if not result.allowed:

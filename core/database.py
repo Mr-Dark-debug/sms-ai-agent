@@ -113,6 +113,7 @@ class Database:
             message TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed', 'delivered')),
+            responded INTEGER DEFAULT 0, -- 0 for false, 1 for true
             response_to INTEGER,
             metadata TEXT,
             FOREIGN KEY (response_to) REFERENCES messages(id) ON DELETE SET NULL
@@ -246,6 +247,13 @@ class Database:
                 
                 message_id = cursor.lastrowid
                 
+                # If this is an outgoing response, mark the original message as responded
+                if direction == "outgoing" and response_to:
+                    conn.execute(
+                        "UPDATE messages SET responded = 1 WHERE id = ?",
+                        (response_to,)
+                    )
+                
                 # Update conversation stats
                 conn.execute(
                     """
@@ -361,6 +369,25 @@ class Database:
                 )
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to update message status: {e}")
+            
+    def was_message_responded(self, phone_number: str, message_content: str) -> bool:
+        """
+        Check if a specific message from a number has already been responded to.
+        Used for idempotency during polling.
+        """
+        try:
+            with self.transaction() as conn:
+                cursor = conn.execute(
+                    """
+                    SELECT id FROM messages 
+                    WHERE phone_number = ? AND message = ? AND responded = 1
+                    LIMIT 1
+                    """,
+                    (phone_number, message_content)
+                )
+                return cursor.fetchone() is not None
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to check response status: {e}")
     
     def _update_conversation(self, conn: sqlite3.Connection, phone_number: str) -> None:
         """

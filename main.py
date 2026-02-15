@@ -595,8 +595,13 @@ def run_daemon(config: Config) -> None:
     
     # Message handler callback
     def handle_message(msg):
-        logger.info(f"Received message from {msg.phone_number}: {msg.message[:50]}")
+        logger.info(f"Daemon: Received message from {msg.phone_number}: {msg.message[:50]}")
         
+        # Check if we already responded to this message content from this number (idempotency)
+        if database.was_message_responded(msg.phone_number, msg.message):
+            logger.info(f"Daemon: Already responded to this message from {msg.phone_number}, skipping.")
+            return
+
         # Check rate limit
         result = rate_limiter.check_and_record(msg.phone_number)
         if not result.allowed:
