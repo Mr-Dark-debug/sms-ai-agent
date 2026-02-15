@@ -3,50 +3,54 @@
 {% block title %}Test - SMS AI Agent{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Test Message Simulator</h1>
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold">Test Message Simulator</h1>
+            <p class="text-[var(--text-muted)] mt-1">Test AI and rule-based responses</p>
+        </div>
     </div>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Input -->
-        <div class="bg-gray-800 p-6 rounded-xl">
-            <h2 class="text-lg font-bold mb-4">Incoming Message</h2>
+        <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+            <h2 class="text-lg font-semibold mb-4">Incoming Message</h2>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Phone Number</label>
-                    <input type="text" id="test-phone" value="+1234567890" 
-                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                    <label for="test-phone" class="block text-sm text-[var(--text-muted)] mb-2">Phone Number</label>
+                    <input type="tel" id="test-phone" value="+1234567890" 
+                           class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
                 </div>
                 
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Message</label>
+                    <label for="test-message" class="block text-sm text-[var(--text-muted)] mb-2">Message</label>
                     <textarea id="test-message" rows="4" placeholder="Enter a test message..."
-                              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg"></textarea>
+                              class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"></textarea>
                 </div>
                 
                 <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="use-ai" class="w-4 h-4 bg-gray-700 border-gray-600 rounded">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="use-ai" class="w-5 h-5 bg-[var(--bg-tertiary)] border-[var(--border)] rounded focus:ring-cyan-500">
                         <span class="text-sm">Use AI (if available)</span>
                     </label>
                 </div>
                 
-                <button onclick="runTest()" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
-                    <i class="fas fa-play mr-2"></i>Generate Response
+                <button onclick="runTest()" class="w-full px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
+                    <i class="fas fa-paper-plane"></i>
+                    Generate Response
                 </button>
             </div>
         </div>
         
         <!-- Output -->
-        <div class="bg-gray-800 p-6 rounded-xl">
-            <h2 class="text-lg font-bold mb-4">Response</h2>
+        <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+            <h2 class="text-lg font-semibold mb-4">Response</h2>
             
             <div id="response-container" class="space-y-4">
-                <div class="text-center py-8 text-gray-400">
-                    <i class="fas fa-paper-plane text-4xl mb-4"></i>
+                <div class="text-center py-12 text-[var(--text-muted)]">
+                    <i class="fas fa-paper-plane text-4xl mb-4 opacity-50"></i>
                     <p>Enter a message and click "Generate Response"</p>
                 </div>
             </div>
@@ -54,32 +58,41 @@
     </div>
     
     <!-- Quick Test Messages -->
-    <div class="bg-gray-800 p-6 rounded-xl">
-        <h2 class="text-lg font-bold mb-4">Quick Test Messages</h2>
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">Quick Test Messages</h2>
         <div class="flex flex-wrap gap-2">
-            <button onclick="quickTest('Hello!')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Hello!</button>
-            <button onclick="quickTest('How are you?')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">How are you?</button>
-            <button onclick="quickTest('Thank you!')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Thank you!</button>
-            <button onclick="quickTest('Goodbye!')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Goodbye!</button>
-            <button onclick="quickTest('Help me please')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Help me please</button>
-            <button onclick="quickTest('What time is it?')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">What time is it?</button>
+            <button onclick="quickTest('Hello!')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">Hello!</button>
+            <button onclick="quickTest('How are you?')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">How are you?</button>
+            <button onclick="quickTest('Thank you!')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">Thank you!</button>
+            <button onclick="quickTest('Goodbye!')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">Goodbye!</button>
+            <button onclick="quickTest('Help me please')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">Help me please</button>
+            <button onclick="quickTest('What time is it?')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">What time is it?</button>
+            <button onclick="quickTest('Tell me a joke')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">Tell me a joke</button>
+            <button onclick="quickTest('What can you do?')" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">What can you do?</button>
         </div>
     </div>
     
     <!-- Rules Preview -->
-    <div class="bg-gray-800 p-6 rounded-xl">
-        <h2 class="text-lg font-bold mb-4">Active Rules</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">Active Rules</h2>
+        {% if rules %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for rule in rules[:6] %}
-            <div class="bg-gray-750 p-4 rounded-lg">
+            <div class="p-4 bg-[var(--bg-tertiary)] rounded-xl">
                 <div class="flex justify-between items-start mb-2">
                     <h3 class="font-medium">{{ rule.name }}</h3>
-                    <span class="text-xs text-gray-500">{{ rule.match_type }}</span>
+                    <span class="text-xs px-2 py-1 bg-[var(--bg-secondary)] rounded-lg text-[var(--text-muted)]">{{ rule.match_type }}</span>
                 </div>
-                <p class="text-xs text-gray-400">{{ rule.patterns|join(', ')[:50] }}{% if rule.patterns|join(', ')|length > 50 %}...{% endif %}</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ rule.patterns|join(', ')[:50] }}{% if rule.patterns|join(', ')|length > 50 %}...{% endif %}</p>
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <div class="text-center py-8 text-[var(--text-muted)]">
+            <i class="fas fa-list-check text-3xl mb-3 opacity-50"></i>
+            <p>No rules configured yet</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -101,9 +114,9 @@ async function runTest() {
     
     const container = document.getElementById('response-container');
     container.innerHTML = `
-        <div class="text-center py-8">
-            <i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4"></i>
-            <p class="text-gray-400">Generating response...</p>
+        <div class="text-center py-12">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-cyan-400 mb-4"></i>
+            <p class="text-[var(--text-muted)]">Generating response...</p>
         </div>
     `;
     
@@ -124,11 +137,11 @@ async function runTest() {
             let violationsHtml = '';
             if (data.guardrail_violations && data.guardrail_violations.length > 0) {
                 violationsHtml = `
-                    <div class="mt-4 p-3 bg-yellow-900/50 border border-yellow-700 rounded-lg">
+                    <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                         <h4 class="font-medium text-yellow-400 mb-2">
                             <i class="fas fa-exclamation-triangle mr-2"></i>Guardrail Warnings
                         </h4>
-                        <ul class="text-sm text-yellow-200">
+                        <ul class="text-sm text-yellow-300 space-y-1">
                             ${data.guardrail_violations.map(v => `<li>• ${v.type}: ${v.action}</li>`).join('')}
                         </ul>
                     </div>
@@ -136,35 +149,35 @@ async function runTest() {
             }
             
             container.innerHTML = `
-                <div class="bg-gray-900 p-4 rounded-lg mb-4">
+                <div class="p-4 bg-[var(--bg-tertiary)] rounded-xl mb-4">
                     <p class="text-lg">${data.response}</p>
-                    <p class="text-xs text-gray-500 mt-2">${data.response.length} characters</p>
+                    <p class="text-xs text-[var(--text-muted)] mt-2">${data.response.length} characters</p>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div class="bg-gray-750 p-3 rounded-lg">
-                        <p class="text-gray-400">Source</p>
-                        <p class="font-medium ${data.source === 'ai' ? 'text-blue-400' : data.source === 'rules' ? 'text-green-400' : 'text-yellow-400'}">
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl">
+                        <p class="text-[var(--text-muted)] text-xs">Source</p>
+                        <p class="font-medium ${data.source === 'ai' ? 'text-cyan-400' : data.source === 'rules' ? 'text-green-400' : 'text-yellow-400'}">
                             ${data.source.toUpperCase()}
                         </p>
                     </div>
-                    <div class="bg-gray-750 p-3 rounded-lg">
-                        <p class="text-gray-400">Latency</p>
+                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl">
+                        <p class="text-[var(--text-muted)] text-xs">Latency</p>
                         <p class="font-medium">${data.latency_ms}ms</p>
                     </div>
                     ${data.model ? `
-                    <div class="bg-gray-750 p-3 rounded-lg">
-                        <p class="text-gray-400">Model</p>
-                        <p class="font-medium font-mono text-xs">${data.model}</p>
+                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl">
+                        <p class="text-[var(--text-muted)] text-xs">Model</p>
+                        <p class="font-mono text-xs truncate">${data.model}</p>
                     </div>
-                    <div class="bg-gray-750 p-3 rounded-lg">
-                        <p class="text-gray-400">Tokens</p>
+                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl">
+                        <p class="text-[var(--text-muted)] text-xs">Tokens</p>
                         <p class="font-medium">${data.tokens_used}</p>
                     </div>
                     ` : ''}
                     ${data.matched_rule ? `
-                    <div class="bg-gray-750 p-3 rounded-lg col-span-2">
-                        <p class="text-gray-400">Matched Rule</p>
+                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl col-span-2">
+                        <p class="text-[var(--text-muted)] text-xs">Matched Rule</p>
                         <p class="font-medium">${data.matched_rule}</p>
                     </div>
                     ` : ''}
@@ -174,7 +187,7 @@ async function runTest() {
             `;
         } else {
             container.innerHTML = `
-                <div class="text-center py-8 text-red-400">
+                <div class="text-center py-12 text-red-400">
                     <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
                     <p>${data.detail || 'Failed to generate response'}</p>
                 </div>
@@ -182,7 +195,7 @@ async function runTest() {
         }
     } catch (error) {
         container.innerHTML = `
-            <div class="text-center py-8 text-red-400">
+            <div class="text-center py-12 text-red-400">
                 <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
                 <p>Failed to connect to server</p>
             </div>

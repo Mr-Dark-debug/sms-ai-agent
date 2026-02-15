@@ -3,53 +3,54 @@
 {% block title %}Logs - SMS AI Agent{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold">System Logs</h1>
-        <div class="flex gap-4">
-            <select id="log-type" onchange="changeLogType()" class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg">
-                <option value="llm" {% if log_type == 'llm' %}selected{% endif %}>LLM Requests</option>
-                <option value="guardrail" {% if log_type == 'guardrail' %}selected{% endif %}>Guardrail Violations</option>
-            </select>
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold">System Logs</h1>
+            <p class="text-[var(--text-muted)] mt-1">View LLM requests and guardrail logs</p>
         </div>
+        <select id="log-type" onchange="changeLogType()" class="px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+            <option value="llm" {% if log_type == 'llm' %}selected{% endif %}>LLM Requests</option>
+            <option value="guardrail" {% if log_type == 'guardrail' %}selected{% endif %}>Guardrail Violations</option>
+        </select>
     </div>
     
     <!-- Logs -->
-    <div class="bg-gray-800 rounded-xl overflow-hidden">
+    <div class="bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border)] overflow-hidden">
         {% if logs %}
         <div class="overflow-x-auto">
-            <table class="w-full">
+            <table class="w-full min-w-[600px]">
                 <thead>
-                    <tr class="text-left text-gray-400 text-sm bg-gray-750">
-                        <th class="px-6 py-4">Timestamp</th>
+                    <tr class="text-left text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)]">
+                        <th class="px-6 py-4 font-medium">Timestamp</th>
                         {% if log_type == 'llm' %}
-                        <th class="px-6 py-4">Provider</th>
-                        <th class="px-6 py-4">Model</th>
-                        <th class="px-6 py-4">Tokens</th>
-                        <th class="px-6 py-4">Latency</th>
-                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 font-medium">Provider</th>
+                        <th class="px-6 py-4 font-medium">Model</th>
+                        <th class="px-6 py-4 font-medium">Tokens</th>
+                        <th class="px-6 py-4 font-medium">Latency</th>
+                        <th class="px-6 py-4 font-medium">Status</th>
                         {% else %}
-                        <th class="px-6 py-4">Phone</th>
-                        <th class="px-6 py-4">Violation Type</th>
-                        <th class="px-6 py-4">Action</th>
+                        <th class="px-6 py-4 font-medium">Phone</th>
+                        <th class="px-6 py-4 font-medium">Violation Type</th>
+                        <th class="px-6 py-4 font-medium">Action</th>
                         {% endif %}
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-700">
+                <tbody class="divide-y divide-[var(--border)]">
                     {% for log in logs %}
-                    <tr class="hover:bg-gray-750">
-                        <td class="px-6 py-4 text-gray-400 text-sm">{{ log.timestamp }}</td>
+                    <tr class="hover:bg-[var(--bg-tertiary)] transition-colors">
+                        <td class="px-6 py-4 text-[var(--text-muted)] text-sm">{{ log.timestamp }}</td>
                         {% if log_type == 'llm' %}
                         <td class="px-6 py-4">{{ log.provider }}</td>
                         <td class="px-6 py-4 font-mono text-xs">{{ log.model }}</td>
                         <td class="px-6 py-4">{{ log.tokens_used }}</td>
                         <td class="px-6 py-4">{{ log.latency_ms }}ms</td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 text-xs rounded
-                                {% if log.status == 'success' %}bg-green-600
-                                {% elif log.status == 'error' %}bg-red-600
-                                {% else %}bg-yellow-600{% endif %}">
+                            <span class="px-2 py-1 text-xs rounded-lg
+                                {% if log.status == 'success' %}bg-green-500/20 text-green-400
+                                {% elif log.status == 'error' %}bg-red-500/20 text-red-400
+                                {% else %}bg-yellow-500/20 text-yellow-400{% endif %}">
                                 {{ log.status }}
                             </span>
                         </td>
@@ -64,9 +65,9 @@
             </table>
         </div>
         {% else %}
-        <div class="text-center py-12">
-            <i class="fas fa-scroll text-4xl text-gray-600 mb-4"></i>
-            <p class="text-gray-400">No logs found</p>
+        <div class="text-center py-16">
+            <i class="fas fa-scroll text-5xl text-[var(--text-muted)] mb-4 opacity-50"></i>
+            <p class="text-[var(--text-muted)]">No logs found</p>
         </div>
         {% endif %}
     </div>

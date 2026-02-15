@@ -3,46 +3,54 @@
 {% block title %}Settings - SMS AI Agent{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Settings</h1>
-        <button onclick="saveSettings()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg">
-            <i class="fas fa-save mr-2"></i>Save Changes
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold">Settings</h1>
+            <p class="text-[var(--text-muted)] mt-1">Configure your SMS AI Agent</p>
+        </div>
+        <button onclick="saveSettings()" class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg flex items-center gap-2">
+            <i class="fas fa-save"></i>
+            <span>Save Changes</span>
         </button>
     </div>
     
     <!-- API Keys -->
-    <div class="bg-gray-800 p-6 rounded-xl">
-        <h2 class="text-lg font-bold mb-4">API Keys</h2>
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">API Keys</h2>
         <div class="space-y-4">
             <!-- OpenRouter -->
-            <div class="flex items-center justify-between p-4 bg-gray-750 rounded-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-tertiary)] rounded-xl gap-4">
                 <div>
                     <h3 class="font-medium">OpenRouter</h3>
-                    <p class="text-sm text-gray-400">Multi-provider LLM gateway</p>
+                    <p class="text-sm text-[var(--text-muted)]">Multi-provider LLM gateway</p>
                 </div>
                 <div class="flex items-center gap-4">
                     {% if api_keys.openrouter %}
-                    <span class="text-green-400 text-sm"><i class="fas fa-check-circle mr-1"></i>Configured</span>
+                    <span class="flex items-center gap-2 text-green-400 text-sm">
+                        <i class="fas fa-check-circle"></i>Configured
+                    </span>
                     {% else %}
-                    <span class="text-yellow-400 text-sm"><i class="fas fa-exclamation-circle mr-1"></i>Not Set</span>
+                    <span class="flex items-center gap-2 text-yellow-400 text-sm">
+                        <i class="fas fa-exclamation-circle"></i>Not Set
+                    </span>
                     {% endif %}
-                    <button onclick="showApiKeyModal('openrouter')" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                    <button onclick="showApiKeyModal('openrouter')" class="px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 rounded-lg text-sm text-white">
                         {% if api_keys.openrouter %}Update{% else %}Configure{% endif %}
                     </button>
                 </div>
             </div>
             
             <!-- Ollama -->
-            <div class="flex items-center justify-between p-4 bg-gray-750 rounded-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-tertiary)] rounded-xl gap-4">
                 <div>
                     <h3 class="font-medium">Ollama</h3>
-                    <p class="text-sm text-gray-400">Local LLM runtime (no API key required)</p>
+                    <p class="text-sm text-[var(--text-muted)]">Local LLM runtime (no API key required)</p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="text-gray-400 text-sm">Local</span>
-                    <button onclick="testOllama()" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                    <span class="text-[var(--text-muted)] text-sm">Local</span>
+                    <button onclick="testOllama()" class="px-3 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--border)] rounded-lg text-sm">
                         Test Connection
                     </button>
                 </div>
@@ -51,185 +59,211 @@
     </div>
     
     <!-- LLM Settings -->
-    <div class="bg-gray-800 p-6 rounded-xl">
-        <h2 class="text-lg font-bold mb-4">LLM Configuration</h2>
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">LLM Configuration</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Provider</label>
-                <select id="llm-provider" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Provider</label>
+                <select id="llm-provider" class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
                     <option value="openrouter" {% if config.llm.provider == 'openrouter' %}selected{% endif %}>OpenRouter</option>
                     <option value="ollama" {% if config.llm.provider == 'ollama' %}selected{% endif %}>Ollama (Local)</option>
                 </select>
             </div>
             
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Model</label>
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Model</label>
                 <input type="text" id="llm-model" value="{{ config.llm.model }}" 
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg font-mono text-sm">
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-mono text-sm">
             </div>
             
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Temperature (0.0 - 2.0)</label>
-                <input type="range" id="llm-temperature" min="0" max="2" step="0.1" value="{{ config.llm.temperature }}"
-                       class="w-full" oninput="document.getElementById('temp-value').textContent = this.value">
-                <span id="temp-value" class="text-sm text-gray-400">{{ config.llm.temperature }}</span>
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Temperature (0.0 - 2.0)</label>
+                <div class="flex items-center gap-4">
+                    <input type="range" id="llm-temperature" min="0" max="2" step="0.1" value="{{ config.llm.temperature }}"
+                           class="flex-1 h-2 bg-[var(--bg-tertiary)] rounded-lg appearance-none cursor-pointer">
+                    <span id="temp-value" class="w-12 text-center font-mono text-sm">{{ config.llm.temperature }}</span>
+                </div>
             </div>
             
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Max Tokens</label>
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Max Tokens</label>
                 <input type="number" id="llm-max-tokens" value="{{ config.llm.max_tokens }}" min="10" max="1000"
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
             </div>
         </div>
     </div>
     
     <!-- SMS Settings -->
-    <div class="bg-gray-800 p-6 rounded-xl">
-        <h2 class="text-lg font-bold mb-4">SMS Configuration</h2>
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">SMS Configuration</h2>
         <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-gray-750 rounded-lg">
+            <!-- Auto Reply -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-tertiary)] rounded-xl gap-4">
                 <div>
                     <h3 class="font-medium">Auto Reply</h3>
-                    <p class="text-sm text-gray-400">Automatically respond to incoming SMS</p>
+                    <p class="text-sm text-[var(--text-muted)]">Automatically respond to incoming SMS</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="sms-auto-reply" class="sr-only peer" {% if config.sms.auto_reply_enabled %}checked{% endif %}>
-                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div class="w-11 h-6 bg-[var(--border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
                 </label>
             </div>
             
-            <div class="flex items-center justify-between p-4 bg-gray-750 rounded-lg">
+            <!-- AI Mode -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-tertiary)] rounded-xl gap-4">
                 <div>
                     <h3 class="font-medium">AI Mode</h3>
-                    <p class="text-sm text-gray-400">Use AI for generating responses</p>
+                    <p class="text-sm text-[var(--text-muted)]">Use AI for generating responses</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="sms-ai-mode" class="sr-only peer" {% if config.sms.ai_mode_enabled %}checked{% endif %}>
-                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div class="w-11 h-6 bg-[var(--border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
                 </label>
             </div>
             
+            <!-- Max Response Length -->
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Max Response Length (characters)</label>
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Max Response Length (characters)</label>
                 <input type="number" id="guardrail-max-length" value="{{ config.guardrail.max_response_length }}" min="50" max="1600"
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
             </div>
         </div>
     </div>
     
-    <!-- Rate Limits -->
-    <div class="bg-gray-800 p-6 rounded-xl">
-        <h2 class="text-lg font-bold mb-4">Rate Limits</h2>
+    <!-- Rate Limits (Read-only) -->
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">Rate Limits</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Messages per Minute</label>
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Messages per Minute</label>
                 <input type="number" id="rate-limit-minute" value="{{ config.rate_limit.max_messages_per_minute }}" min="1" max="100"
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg" disabled>
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl opacity-60" disabled>
             </div>
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Per Recipient (Hourly)</label>
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Per Recipient (Hourly)</label>
                 <input type="number" id="rate-limit-hour" value="{{ config.rate_limit.max_per_recipient_per_hour }}" min="1" max="100"
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg" disabled>
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl opacity-60" disabled>
             </div>
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Per Recipient (Daily)</label>
+                <label class="block text-sm text-[var(--text-muted)] mb-2">Per Recipient (Daily)</label>
                 <input type="number" id="rate-limit-day" value="{{ config.rate_limit.max_per_recipient_per_day }}" min="1" max="200"
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg" disabled>
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl opacity-60" disabled>
             </div>
         </div>
-        <p class="text-sm text-gray-500 mt-4"><i class="fas fa-info-circle mr-1"></i>Rate limits require config.yaml modification</p>
+        <p class="text-sm text-[var(--text-muted)] mt-4">
+            <i class="fas fa-info-circle mr-1"></i>Rate limits require config.yaml modification
+        </p>
     </div>
 </div>
 
 <!-- API Key Modal -->
-<div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md">
-        <h3 class="text-lg font-bold mb-4" id="modal-title">Configure API Key</h3>
+<div id="api-key-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl w-full max-w-md border border-[var(--border)] animate-scale-in">
+        <h3 class="text-lg font-semibold mb-4" id="modal-title">Configure API Key</h3>
         <input type="password" id="api-key-input" placeholder="Enter API key..." 
-               class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg mb-4">
-        <div class="flex justify-end gap-4">
-            <button onclick="hideApiKeyModal()" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">Cancel</button>
-            <button onclick="saveApiKey()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">Save</button>
+               class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl mb-4"
+               aria-label="API Key">
+        <div class="flex justify-end gap-3">
+            <button onclick="hideApiKeyModal()" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl">
+                Cancel
+            </button>
+            <button onclick="saveApiKey()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl">
+                Save
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-let currentProvider = '';
-
-function showApiKeyModal(provider) {
-    currentProvider = provider;
-    document.getElementById('modal-title').textContent = `Configure ${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`;
-    document.getElementById('api-key-modal').classList.remove('hidden');
-    document.getElementById('api-key-modal').classList.add('flex');
-}
-
-function hideApiKeyModal() {
-    document.getElementById('api-key-modal').classList.add('hidden');
-    document.getElementById('api-key-modal').classList.remove('flex');
-    document.getElementById('api-key-input').value = '';
-}
-
-async function saveApiKey() {
-    const apiKey = document.getElementById('api-key-input').value;
-    if (!apiKey) {
-        showToast('Please enter an API key', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/api-key', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ provider: currentProvider, api_key: apiKey })
+    // Temperature slider
+    const tempSlider = document.getElementById('llm-temperature');
+    const tempValue = document.getElementById('temp-value');
+    if (tempSlider && tempValue) {
+        tempSlider.addEventListener('input', () => {
+            tempValue.textContent = tempSlider.value;
         });
-        
-        const data = await response.json();
-        if (data.success) {
-            showToast(data.message, 'success');
-            hideApiKeyModal();
-            location.reload();
-        } else {
-            showToast(data.detail || 'Failed to save API key', 'error');
+    }
+
+    let currentProvider = '';
+
+    function showApiKeyModal(provider) {
+        currentProvider = provider;
+        document.getElementById('modal-title').textContent = `Configure ${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`;
+        document.getElementById('api-key-modal').classList.remove('hidden');
+        document.getElementById('api-key-modal').classList.add('flex');
+        document.getElementById('api-key-input').focus();
+    }
+
+    function hideApiKeyModal() {
+        document.getElementById('api-key-modal').classList.add('hidden');
+        document.getElementById('api-key-modal').classList.remove('flex');
+        document.getElementById('api-key-input').value = '';
+    }
+
+    async function saveApiKey() {
+        const apiKey = document.getElementById('api-key-input').value;
+        if (!apiKey) {
+            showToast('Please enter an API key', 'error');
+            return;
         }
-    } catch (error) {
-        showToast('Failed to save API key', 'error');
-    }
-}
-
-async function saveSettings() {
-    const settings = {
-        llm_provider: document.getElementById('llm-provider').value,
-        llm_model: document.getElementById('llm-model').value,
-        llm_temperature: parseFloat(document.getElementById('llm-temperature').value),
-        llm_max_tokens: parseInt(document.getElementById('llm-max-tokens').value),
-        sms_auto_reply: document.getElementById('sms-auto-reply').checked,
-        sms_ai_mode: document.getElementById('sms-ai-mode').checked,
-        guardrail_max_length: parseInt(document.getElementById('guardrail-max-length').value)
-    };
-    
-    try {
-        const response = await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(settings)
-        });
         
-        const data = await response.json();
-        if (data.success) {
-            showToast('Settings saved successfully', 'success');
-        } else {
+        try {
+            const response = await fetch('/api/api-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ provider: currentProvider, api_key: apiKey })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showToast(data.message, 'success');
+                hideApiKeyModal();
+                location.reload();
+            } else {
+                showToast(data.detail || 'Failed to save API key', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to save API key', 'error');
+        }
+    }
+
+    async function saveSettings() {
+        const settings = {
+            llm_provider: document.getElementById('llm-provider').value,
+            llm_model: document.getElementById('llm-model').value,
+            llm_temperature: parseFloat(document.getElementById('llm-temperature').value),
+            llm_max_tokens: parseInt(document.getElementById('llm-max-tokens').value),
+            sms_auto_reply: document.getElementById('sms-auto-reply').checked,
+            sms_ai_mode: document.getElementById('sms-ai-mode').checked,
+            guardrail_max_length: parseInt(document.getElementById('guardrail-max-length').value)
+        };
+        
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showToast('Settings saved successfully', 'success');
+            } else {
+                showToast('Failed to save settings', 'error');
+            }
+        } catch (error) {
             showToast('Failed to save settings', 'error');
         }
-    } catch (error) {
-        showToast('Failed to save settings', 'error');
     }
-}
 
-async function testOllama() {
-    showToast('Testing Ollama connection...', 'info');
-    // This would need an endpoint to test Ollama
-    setTimeout(() => showToast('Ollama connection test not implemented yet', 'warning'), 1000);
-}
+    async function testOllama() {
+        showToast('Testing Ollama connection...', 'info');
+        setTimeout(() => showToast('Ollama connection test not implemented yet', 'warning'), 2000);
+    }
+
+    // Close modal on escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideApiKeyModal();
+    });
 </script>
 {% endblock %}

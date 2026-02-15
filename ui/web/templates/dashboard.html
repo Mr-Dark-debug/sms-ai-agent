@@ -3,168 +3,179 @@
 {% block title %}Dashboard - SMS AI Agent{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Dashboard</h1>
-        <button onclick="location.reload()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
-            <i class="fas fa-refresh mr-2"></i>Refresh
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+            <p class="text-[var(--text-muted)] mt-1">Monitor your SMS AI Agent</p>
+        </div>
+        <button onclick="location.reload()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl shadow-lg flex items-center gap-2">
+            <i class="fas fa-sync-alt"></i>
+            <span>Refresh</span>
         </button>
     </div>
     
     <!-- Status Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="card bg-gray-800 p-6 rounded-xl">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- SMS Status -->
+        <div class="card bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border)]">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-400 text-sm">SMS Status</p>
-                    <p class="text-xl font-bold mt-1">
-                        {% if sms_available %}
-                        <span class="text-green-400">Available</span>
-                        {% else %}
-                        <span class="text-yellow-400">Unavailable</span>
-                        {% endif %}
+                    <p class="text-sm text-[var(--text-muted)]">SMS Status</p>
+                    <p class="text-xl font-bold mt-1 {% if sms_available %}text-green-400{% else %}text-yellow-400{% endif %}">
+                        {% if sms_available %}Available{% else %}Unavailable{% endif %}
                     </p>
                 </div>
-                <div class="w-12 h-12 {% if sms_available %}bg-green-600{% else %}bg-yellow-600{% endif %} rounded-full flex items-center justify-center">
-                    <i class="fas fa-comment-sms text-xl"></i>
+                <div class="w-12 h-12 {% if sms_available %}bg-green-500/20{% else %}bg-yellow-500/20{% endif %} rounded-xl flex items-center justify-center">
+                    <i class="fas fa-comment-sms text-xl {% if sms_available %}text-green-400{% else %}text-yellow-400{% endif %}"></i>
                 </div>
             </div>
         </div>
         
-        <div class="card bg-gray-800 p-6 rounded-xl">
+        <!-- LLM Status -->
+        <div class="card bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border)]">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-400 text-sm">LLM Status</p>
-                    <p class="text-xl font-bold mt-1">
-                        {% if llm_status.llm_available %}
-                        <span class="{% if llm_status.connection_ok %}text-green-400{% else %}text-red-400{% endif %}">
-                            {{ llm_status.provider|title }}
-                        </span>
-                        {% else %}
-                        <span class="text-gray-400">Not Configured</span>
-                        {% endif %}
+                    <p class="text-sm text-[var(--text-muted)]">LLM Status</p>
+                    <p class="text-xl font-bold mt-1 {% if llm_status.llm_available %}{% if llm_status.connection_ok %}text-green-400{% else %}text-red-400{% endif %}{% else %}text-[var(--text-muted)]{% endif %}">
+                        {% if llm_status.llm_available %}{{ llm_status.provider|title }}{% else %}Not Configured{% endif %}
                     </p>
                 </div>
-                <div class="w-12 h-12 {% if llm_status.connection_ok %}bg-green-600{% elif llm_status.llm_available %}bg-red-600{% else %}bg-gray-600{% endif %} rounded-full flex items-center justify-center">
-                    <i class="fas fa-brain text-xl"></i>
+                <div class="w-12 h-12 {% if llm_status.connection_ok %}bg-cyan-500/20{% elif llm_status.llm_available %}bg-red-500/20{% else %}bg-gray-500/20{% endif %} rounded-xl flex items-center justify-center">
+                    <i class="fas fa-brain text-xl {% if llm_status.connection_ok %}text-cyan-400{% elif llm_status.llm_available %}text-red-400{% else %}text-gray-400{% endif %}"></i>
                 </div>
             </div>
         </div>
         
-        <div class="card bg-gray-800 p-6 rounded-xl">
+        <!-- Total Messages -->
+        <div class="card bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border)]">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-400 text-sm">Total Messages</p>
-                    <p class="text-xl font-bold mt-1">
-                        {{ stats.messages.incoming|default(0) + stats.messages.outgoing|default(0) }}
-                    </p>
+                    <p class="text-sm text-[var(--text-muted)]">Total Messages</p>
+                    <p class="text-xl font-bold mt-1">{{ stats.messages.incoming|default(0) + stats.messages.outgoing|default(0) }}</p>
                 </div>
-                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                    <i class="fas fa-envelope text-xl"></i>
+                <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-envelope text-xl text-blue-400"></i>
                 </div>
             </div>
         </div>
         
-        <div class="card bg-gray-800 p-6 rounded-xl">
+        <!-- Guardrail Blocks -->
+        <div class="card bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border)]">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-400 text-sm">Guardrail Blocks</p>
+                    <p class="text-sm text-[var(--text-muted)]">Guardrail Blocks</p>
                     <p class="text-xl font-bold mt-1">{{ stats.guardrail_violations|default(0) }}</p>
                 </div>
-                <div class="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center">
-                    <i class="fas fa-shield-halved text-xl"></i>
+                <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-shield-halved text-xl text-orange-400"></i>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- Quick Actions -->
-    <div class="bg-gray-800 p-6 rounded-xl">
-        <h2 class="text-lg font-bold mb-4">Quick Actions</h2>
-        <div class="flex flex-wrap gap-4">
-            <a href="/test" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
-                <i class="fas fa-flask mr-2"></i>Test Response
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
+        <div class="flex flex-wrap gap-3">
+            <a href="/test" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl flex items-center gap-2">
+                <i class="fas fa-flask"></i>
+                <span>Test Response</span>
             </a>
-            <a href="/settings" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
-                <i class="fas fa-cog mr-2"></i>Settings
+            <a href="/settings" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
             </a>
-            <a href="/messages" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">
-                <i class="fas fa-comments mr-2"></i>View Messages
+            <a href="/messages" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
+                <i class="fas fa-comments"></i>
+                <span>View Messages</span>
+            </a>
+            <a href="/logs" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
+                <i class="fas fa-scroll"></i>
+                <span>Logs</span>
             </a>
         </div>
     </div>
     
     <!-- Recent Messages -->
-    <div class="bg-gray-800 p-6 rounded-xl">
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-bold">Recent Messages</h2>
-            <a href="/messages" class="text-blue-400 hover:text-blue-300 text-sm">View All</a>
+            <h2 class="text-lg font-semibold">Recent Messages</h2>
+            <a href="/messages" class="text-cyan-400 hover:text-cyan-300 text-sm">View All</a>
         </div>
         
         {% if recent_messages %}
-        <div class="overflow-x-auto">
-            <table class="w-full">
+        <div class="overflow-x-auto -mx-6 px-6">
+            <table class="w-full min-w-[500px]">
                 <thead>
-                    <tr class="text-left text-gray-400 text-sm border-b border-gray-700">
-                        <th class="pb-3">Direction</th>
-                        <th class="pb-3">Phone</th>
-                        <th class="pb-3">Message</th>
-                        <th class="pb-3">Status</th>
-                        <th class="pb-3">Time</th>
+                    <tr class="text-left text-sm text-[var(--text-muted)] border-b border-[var(--border)]">
+                        <th class="pb-3 font-medium">Direction</th>
+                        <th class="pb-3 font-medium">Phone</th>
+                        <th class="pb-3 font-medium">Message</th>
+                        <th class="pb-3 font-medium">Status</th>
+                        <th class="pb-3 font-medium">Time</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-700">
+                <tbody class="divide-y divide-[var(--border)]">
                     {% for msg in recent_messages %}
                     <tr class="text-sm">
                         <td class="py-3">
                             {% if msg.direction == 'incoming' %}
-                            <span class="text-blue-400"><i class="fas fa-arrow-down mr-1"></i>In</span>
+                            <span class="inline-flex items-center gap-1 text-blue-400">
+                                <i class="fas fa-arrow-down"></i>In
+                            </span>
                             {% else %}
-                            <span class="text-green-400"><i class="fas fa-arrow-up mr-1"></i>Out</span>
+                            <span class="inline-flex items-center gap-1 text-green-400">
+                                <i class="fas fa-arrow-up"></i>Out
+                            </span>
                             {% endif %}
                         </td>
                         <td class="py-3 font-mono text-xs">{{ msg.phone_number }}</td>
-                        <td class="py-3">{{ msg.message[:50] }}{% if msg.message|length > 50 %}...{% endif %}</td>
+                        <td class="py-3 max-w-xs truncate">{{ msg.message[:50] }}{% if msg.message|length > 50 %}...{% endif %}</td>
                         <td class="py-3">
-                            <span class="px-2 py-1 text-xs rounded {{ 'bg-green-600' if msg.status == 'sent' else 'bg-yellow-600' }}">
+                            <span class="px-2 py-1 text-xs rounded-lg {% if msg.status == 'sent' %}bg-green-500/20 text-green-400{% else %}bg-yellow-500/20 text-yellow-400{% endif %}">
                                 {{ msg.status|title }}
                             </span>
                         </td>
-                        <td class="py-3 text-gray-400 text-xs">{{ msg.timestamp }}</td>
+                        <td class="py-3 text-[var(--text-muted)] text-xs">{{ msg.timestamp }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <p class="text-gray-400 text-center py-8">No messages yet</p>
+        <div class="text-center py-12">
+            <i class="fas fa-inbox text-4xl text-[var(--text-muted)] mb-3"></i>
+            <p class="text-[var(--text-muted)]">No messages yet</p>
+        </div>
         {% endif %}
     </div>
     
     <!-- Configuration Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gray-800 p-6 rounded-xl">
-            <h2 class="text-lg font-bold mb-4">AI Configuration</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- AI Configuration -->
+        <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+            <h2 class="text-lg font-semibold mb-4">AI Configuration</h2>
             <div class="space-y-3 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Provider:</span>
-                    <span>{{ config.llm.provider|title }}</span>
+                <div class="flex justify-between py-2 border-b border-[var(--border)]">
+                    <span class="text-[var(--text-muted)]">Provider</span>
+                    <span class="font-medium">{{ config.llm.provider|title }}</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Model:</span>
+                <div class="flex justify-between py-2 border-b border-[var(--border)]">
+                    <span class="text-[var(--text-muted)]">Model</span>
                     <span class="font-mono text-xs">{{ config.llm.model }}</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Temperature:</span>
-                    <span>{{ config.llm.temperature }}</span>
+                <div class="flex justify-between py-2 border-b border-[var(--border)]">
+                    <span class="text-[var(--text-muted)]">Temperature</span>
+                    <span class="font-medium">{{ config.llm.temperature }}</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Max Tokens:</span>
-                    <span>{{ config.llm.max_tokens }}</span>
+                <div class="flex justify-between py-2 border-b border-[var(--border)]">
+                    <span class="text-[var(--text-muted)]">Max Tokens</span>
+                    <span class="font-medium">{{ config.llm.max_tokens }}</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">AI Mode:</span>
+                <div class="flex justify-between py-2">
+                    <span class="text-[var(--text-muted)]">AI Mode</span>
                     <span class="{% if config.sms.ai_mode_enabled %}text-green-400{% else %}text-red-400{% endif %}">
                         {{ 'Enabled' if config.sms.ai_mode_enabled else 'Disabled' }}
                     </span>
@@ -172,26 +183,27 @@
             </div>
         </div>
         
-        <div class="bg-gray-800 p-6 rounded-xl">
-            <h2 class="text-lg font-bold mb-4">SMS Configuration</h2>
+        <!-- SMS Configuration -->
+        <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+            <h2 class="text-lg font-semibold mb-4">SMS Configuration</h2>
             <div class="space-y-3 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Auto Reply:</span>
+                <div class="flex justify-between py-2 border-b border-[var(--border)]">
+                    <span class="text-[var(--text-muted)]">Auto Reply</span>
                     <span class="{% if config.sms.auto_reply_enabled %}text-green-400{% else %}text-red-400{% endif %}">
                         {{ 'Enabled' if config.sms.auto_reply_enabled else 'Disabled' }}
                     </span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Max Response Length:</span>
-                    <span>{{ config.sms.max_response_length }} chars</span>
+                <div class="flex justify-between py-2 border-b border-[var(--border)]">
+                    <span class="text-[var(--text-muted)]">Max Response Length</span>
+                    <span class="font-medium">{{ config.sms.max_response_length }} chars</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Rate Limit:</span>
-                    <span>{{ config.rate_limit.max_messages_per_minute }}/min</span>
+                <div class="flex justify-between py-2 border-b border-[var(--border)]">
+                    <span class="text-[var(--text-muted)]">Rate Limit</span>
+                    <span class="font-medium">{{ config.rate_limit.max_messages_per_minute }}/min</span>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Per Recipient:</span>
-                    <span>{{ config.rate_limit.max_per_recipient_per_hour }}/hour</span>
+                <div class="flex justify-between py-2">
+                    <span class="text-[var(--text-muted)]">Per Recipient</span>
+                    <span class="font-medium">{{ config.rate_limit.max_per_recipient_per_hour }}/hour</span>
                 </div>
             </div>
         </div>
