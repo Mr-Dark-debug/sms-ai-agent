@@ -664,12 +664,19 @@ class SMSAgentApp(App):
         
         self.install_screen(MainScreen(self.config, self.database), name="main")
     
-    def on_mount(self) -> None:
-        self.push_screen("main")
+        def on_mount(self) -> None:
+            self.push_screen("main")
     
-    def action_quit(self) -> None:
-        self.exit()
-
+        def action_test(self) -> None:
+            """Switch to the test tab."""
+            self.screen.action_test()
+    
+        def action_settings(self) -> None:
+            """Switch to the settings tab."""
+            self.screen.action_settings()
+    
+        def action_quit(self) -> None:
+            self.exit()
 
 def run_tui(config: Optional[Config] = None) -> None:
     app = SMSAgentApp(config=config)
