@@ -3,95 +3,111 @@
 {% block title %}Messages - SMS AI Agent{% endblock %}
 
 {% block content %}
-<div class="space-y-6 animate-fade-in">
+<div class="flex flex-col h-[calc(100vh-8rem)] animate-fade-in">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-bold">Messages</h1>
-            <p class="text-[var(--text-muted)] mt-1">View all SMS messages</p>
+            <p class="text-[var(--text-muted)] mt-1">Full communication logs</p>
+        </div>
+        
+        <!-- Filters -->
+        <div class="flex flex-col sm:flex-row gap-2">
+            <select id="direction-filter" onchange="filterMessages()" class="px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm">
+                <option value="">All Directions</option>
+                <option value="incoming" {% if filters.direction == 'incoming' %}selected{% endif %}>Incoming</option>
+                <option value="outgoing" {% if filters.direction == 'outgoing' %}selected{% endif %}>Outgoing</option>
+            </select>
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs"></i>
+                <input type="tel" id="phone-filter" placeholder="Filter phone..." value="{{ filters.phone or '' }}" 
+                       class="pl-9 pr-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm"
+                       onchange="filterMessages()">
+            </div>
         </div>
     </div>
     
-    <!-- Filters -->
-    <div class="flex flex-col sm:flex-row gap-4">
-        <select id="direction-filter" onchange="filterMessages()" class="px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
-            <option value="">All Directions</option>
-            <option value="incoming" {% if filters.direction == 'incoming' %}selected{% endif %}>Incoming</option>
-            <option value="outgoing" {% if filters.direction == 'outgoing' %}selected{% endif %}>Outgoing</option>
-        </select>
-        <input type="tel" id="phone-filter" placeholder="Filter by phone..." value="{{ filters.phone or '' }}" 
-               class="px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-               onchange="filterMessages()">
-    </div>
-    
-    <!-- Messages Table -->
-    <div class="bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border)] overflow-hidden">
+    <!-- Messages Table (Full Screen Feel) -->
+    <div class="flex-1 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border)] overflow-hidden flex flex-col shadow-xl">
         {% if messages %}
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[600px]">
-                <thead>
-                    <tr class="text-left text-sm text-[var(--text-muted)] bg-[var(--bg-tertiary)]">
-                        <th class="px-6 py-4 font-medium">Direction</th>
-                        <th class="px-6 py-4 font-medium">Phone Number</th>
-                        <th class="px-6 py-4 font-medium">Message</th>
-                        <th class="px-6 py-4 font-medium">Status</th>
-                        <th class="px-6 py-4 font-medium">Timestamp</th>
+        <div class="overflow-auto flex-1">
+            <table class="w-full min-w-[600px] border-collapse">
+                <thead class="sticky top-0 z-10">
+                    <tr class="text-left text-xs uppercase tracking-wider text-[var(--text-muted)] bg-[var(--bg-tertiary)] border-b border-[var(--border)]">
+                        <th class="px-6 py-4 font-bold">Direction</th>
+                        <th class="px-6 py-4 font-bold">Contact</th>
+                        <th class="px-6 py-4 font-bold">Message Content</th>
+                        <th class="px-6 py-4 font-bold">Status</th>
+                        <th class="px-6 py-4 font-bold">Timestamp</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[var(--border)]">
                     {% for msg in messages %}
-                    <tr class="hover:bg-[var(--bg-tertiary)] transition-colors">
+                    <tr class="hover:bg-cyan-500/5 transition-colors group">
                         <td class="px-6 py-4">
                             {% if msg.direction == 'incoming' %}
-                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-blue-500/20 text-blue-400">
-                                <i class="fas fa-arrow-down"></i> Incoming
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                <i class="fas fa-arrow-down"></i> IN
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-green-500/20 text-green-400">
-                                <i class="fas fa-arrow-up"></i> Outgoing
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">
+                                <i class="fas fa-arrow-up"></i> OUT
                             </span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 font-mono text-sm">{{ msg.phone_number }}</td>
                         <td class="px-6 py-4">
-                            <div class="max-w-md truncate" title="{{ msg.message }}">
-                                {{ msg.message }}
-                            </div>
+                            <a href="/messages/history/{{ msg.phone_number }}" class="font-mono text-sm text-cyan-400 hover:underline">
+                                {{ msg.phone_number }}
+                            </a>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 text-xs rounded-lg
-                                {% if msg.status == 'sent' %}bg-green-500/20 text-green-400
-                                {% elif msg.status == 'failed' %}bg-red-500/20 text-red-400
-                                {% elif msg.status == 'delivered' %}bg-blue-500/20 text-blue-400
-                                {% else %}bg-yellow-500/20 text-yellow-400{% endif %}">
-                                {{ msg.status|title }}
+                            <p class="text-sm line-clamp-2 group-hover:line-clamp-none transition-all duration-300 max-w-xl">
+                                {{ msg.message }}
+                            </p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-[10px] font-bold rounded-lg uppercase tracking-tight
+                                {% if msg.status == 'sent' %}bg-green-500/10 text-green-400 border border-green-500/20
+                                {% elif msg.status == 'failed' %}bg-red-500/10 text-red-400 border border-red-500/20
+                                {% elif msg.status == 'delivered' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
+                                {% else %}bg-yellow-500/10 text-yellow-400 border border-yellow-500/20{% endif %}">
+                                {{ msg.status }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-[var(--text-muted)] text-sm">{{ msg.timestamp }}</td>
+                        <td class="px-6 py-4 text-[var(--text-muted)] text-[11px] font-mono whitespace-nowrap">
+                            {{ msg.timestamp }}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         
-        <!-- Pagination -->
-        <div class="px-6 py-4 border-t border-[var(--border)] flex flex-col sm:flex-row justify-between items-center gap-4">
-            <span class="text-sm text-[var(--text-muted)]">Showing {{ messages|length }} messages</span>
+        <!-- Sticky Pagination Footer -->
+        <div class="px-6 py-4 bg-[var(--bg-tertiary)] border-t border-[var(--border)] flex flex-col sm:flex-row justify-between items-center gap-4">
+            <span class="text-xs text-[var(--text-muted)] font-medium">Logged {{ messages|length }} interactions in this view</span>
             <div class="flex gap-2">
                 {% if offset > 0 %}
                 <a href="?offset={{ offset - limit }}&limit={{ limit }}&phone={{ filters.phone }}&direction={{ filters.direction }}"
-                   class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">Previous</a>
+                   class="px-4 py-2 bg-[var(--bg-secondary)] hover:border-cyan-500 border border-[var(--border)] rounded-xl text-xs transition-all">
+                   <i class="fas fa-chevron-left mr-1"></i> Previous
+                </a>
                 {% endif %}
                 {% if messages|length == limit %}
                 <a href="?offset={{ offset + limit }}&limit={{ limit }}&phone={{ filters.phone }}&direction={{ filters.direction }}"
-                   class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-lg text-sm">Next</a>
+                   class="px-4 py-2 bg-[var(--bg-secondary)] hover:border-cyan-500 border border-[var(--border)] rounded-xl text-xs transition-all">
+                   Next <i class="fas fa-chevron-right ml-1"></i>
+                </a>
                 {% endif %}
             </div>
         </div>
         {% else %}
-        <div class="text-center py-16">
-            <i class="fas fa-inbox text-5xl text-[var(--text-muted)] mb-4 opacity-50"></i>
-            <p class="text-[var(--text-muted)]">No messages found</p>
+        <div class="flex-1 flex flex-col items-center justify-center py-20">
+            <div class="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-inbox text-3xl text-[var(--text-muted)] opacity-30"></i>
+            </div>
+            <p class="text-[var(--text-muted)] font-medium">No records found for the selected criteria</p>
+            <button onclick="window.location.href='/messages'" class="mt-4 text-cyan-400 text-sm hover:underline">Clear all filters</button>
         </div>
         {% endif %}
     </div>

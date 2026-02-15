@@ -136,6 +136,9 @@ class SMSHandler:
         self.timeout = timeout
         self.webhook_config = webhook_config or {"enabled": False, "url": "", "headers": {}}
         
+        # Track when we started to avoid processing old messages
+        self.start_time = datetime.now()
+        
         # Callbacks for incoming messages
         self._callbacks: List[Callable[[SMSMessage], None]] = []
         self._listener_thread: Optional[threading.Thread] = None
@@ -467,8 +470,12 @@ class SMSHandler:
                 new_incoming = []
                 
                 for msg in messages:
-                    # Only process incoming messages
+                    # Only process incoming messages (Inbox)
                     if msg.direction != "incoming":
+                        continue
+                    
+                    # Ignore messages received before bot started
+                    if msg.timestamp < self.start_time:
                         continue
                     
                     # Create more robust unique ID using message content

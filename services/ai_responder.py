@@ -210,7 +210,7 @@ Avoid:
             except Exception as e:
                 logger.error(f"AI generation failed: {e}")
         
-        # Fall back to rules
+        # Fall back to rules ONLY IF AI didn't return a response
         if self.rules_engine:
             match = self.rules_engine.match(incoming_message, context)
             if match:
