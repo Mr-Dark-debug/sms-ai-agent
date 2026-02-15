@@ -3,31 +3,36 @@
 {% block title %}Rules - SMS AI Agent{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 animate-fade-in">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Response Rules</h1>
-        <button onclick="showAddRuleModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
-            <i class="fas fa-plus mr-2"></i>Add Rule
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold">Response Rules</h1>
+            <p class="text-[var(--text-muted)] mt-1">Manage pattern matching rules</p>
+        </div>
+        <button onclick="showAddRuleModal()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl flex items-center gap-2">
+            <i class="fas fa-plus"></i>
+            Add Rule
         </button>
     </div>
     
     <!-- Rules List -->
     <div class="space-y-4">
+        {% if rules %}
         {% for rule in rules %}
-        <div class="bg-gray-800 p-6 rounded-xl">
-            <div class="flex justify-between items-start mb-4">
+        <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                 <div>
-                    <h3 class="text-lg font-bold">{{ rule.name }}</h3>
-                    <p class="text-sm text-gray-400">Match Type: {{ rule.match_type }} | Priority: {{ rule.priority }}</p>
+                    <h3 class="text-lg font-semibold">{{ rule.name }}</h3>
+                    <p class="text-sm text-[var(--text-muted)]">Match Type: {{ rule.match_type }} | Priority: {{ rule.priority }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     {% if rule.enabled %}
-                    <span class="px-2 py-1 text-xs bg-green-600 rounded">Enabled</span>
+                    <span class="px-3 py-1 text-xs bg-green-500/20 text-green-400 rounded-lg">Enabled</span>
                     {% else %}
-                    <span class="px-2 py-1 text-xs bg-gray-600 rounded">Disabled</span>
+                    <span class="px-3 py-1 text-xs bg-gray-500/20 text-gray-400 rounded-lg">Disabled</span>
                     {% endif %}
-                    <button onclick="deleteRule('{{ rule.name }}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                    <button onclick="deleteRule('{{ rule.name }}')" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -35,51 +40,52 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <h4 class="text-sm text-gray-400 mb-2">Patterns</h4>
+                    <h4 class="text-sm text-[var(--text-muted)] mb-2">Patterns</h4>
                     <div class="flex flex-wrap gap-2">
                         {% for pattern in rule.patterns %}
-                        <span class="px-2 py-1 bg-gray-700 rounded text-sm font-mono">{{ pattern }}</span>
+                        <span class="px-3 py-1.5 bg-[var(--bg-tertiary)] rounded-lg text-sm font-mono">{{ pattern }}</span>
                         {% endfor %}
                     </div>
                 </div>
                 
                 <div>
-                    <h4 class="text-sm text-gray-400 mb-2">Responses</h4>
+                    <h4 class="text-sm text-[var(--text-muted)] mb-2">Responses</h4>
                     <ul class="space-y-1">
                         {% for response in rule.responses %}
-                        <li class="text-sm text-gray-300">• {{ response }}</li>
+                        <li class="text-sm">• {{ response }}</li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
         </div>
+        {% endfor %}
         {% else %}
-        <div class="bg-gray-800 p-12 rounded-xl text-center">
-            <i class="fas fa-list-check text-4xl text-gray-600 mb-4"></i>
-            <p class="text-gray-400">No rules configured</p>
-            <button onclick="showAddRuleModal()" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+        <div class="bg-[var(--bg-secondary)] p-12 rounded-2xl border border-[var(--border)] text-center">
+            <i class="fas fa-list-check text-5xl text-[var(--text-muted)] mb-4 opacity-50"></i>
+            <p class="text-[var(--text-muted)] mb-4">No rules configured</p>
+            <button onclick="showAddRuleModal()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl">
                 Add First Rule
             </button>
         </div>
-        {% endfor %}
+        {% endif %}
     </div>
 </div>
 
 <!-- Add Rule Modal -->
-<div id="add-rule-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 p-6 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h3 class="text-lg font-bold mb-4">Add New Rule</h3>
+<div id="add-rule-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-[var(--border)] animate-scale-in">
+        <h3 class="text-lg font-semibold mb-4">Add New Rule</h3>
         
         <div class="space-y-4">
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Rule Name</label>
+                <label for="rule-name" class="block text-sm text-[var(--text-muted)] mb-2">Rule Name</label>
                 <input type="text" id="rule-name" placeholder="e.g., greeting" 
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
             </div>
             
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Match Type</label>
-                <select id="rule-match-type" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                <label for="rule-match-type" class="block text-sm text-[var(--text-muted)] mb-2">Match Type</label>
+                <select id="rule-match-type" class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
                     <option value="contains">Contains (default)</option>
                     <option value="exact">Exact Match</option>
                     <option value="startswith">Starts With</option>
@@ -90,27 +96,27 @@
             </div>
             
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Patterns (one per line)</label>
+                <label for="rule-patterns" class="block text-sm text-[var(--text-muted)] mb-2">Patterns (one per line)</label>
                 <textarea id="rule-patterns" rows="3" placeholder="hello&#10;hi&#10;hey"
-                          class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg"></textarea>
+                          class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"></textarea>
             </div>
             
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Responses (one per line, random selection)</label>
+                <label for="rule-responses" class="block text-sm text-[var(--text-muted)] mb-2">Responses (one per line, random selection)</label>
                 <textarea id="rule-responses" rows="3" placeholder="Hello! How can I help you?&#10;Hi there!"
-                          class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg"></textarea>
+                          class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"></textarea>
             </div>
             
             <div>
-                <label class="block text-sm text-gray-400 mb-2">Priority (0-100, higher = more important)</label>
+                <label for="rule-priority" class="block text-sm text-[var(--text-muted)] mb-2">Priority (0-100, higher = more important)</label>
                 <input type="number" id="rule-priority" value="50" min="0" max="100"
-                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
             </div>
         </div>
         
-        <div class="flex justify-end gap-4 mt-6">
-            <button onclick="hideAddRuleModal()" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">Cancel</button>
-            <button onclick="saveRule()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">Save Rule</button>
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="hideAddRuleModal()" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl">Cancel</button>
+            <button onclick="saveRule()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl">Save Rule</button>
         </div>
     </div>
 </div>
@@ -124,7 +130,6 @@ function showAddRuleModal() {
 function hideAddRuleModal() {
     document.getElementById('add-rule-modal').classList.add('hidden');
     document.getElementById('add-rule-modal').classList.remove('flex');
-    // Clear form
     document.getElementById('rule-name').value = '';
     document.getElementById('rule-patterns').value = '';
     document.getElementById('rule-responses').value = '';
@@ -188,5 +193,10 @@ async function deleteRule(ruleName) {
         showToast('Failed to delete rule', 'error');
     }
 }
+
+// Close modal on escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideAddRuleModal();
+});
 </script>
 {% endblock %}

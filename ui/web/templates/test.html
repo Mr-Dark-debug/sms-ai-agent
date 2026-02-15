@@ -83,7 +83,7 @@
                     <h3 class="font-medium">{{ rule.name }}</h3>
                     <span class="text-xs px-2 py-1 bg-[var(--bg-secondary)] rounded-lg text-[var(--text-muted)]">{{ rule.match_type }}</span>
                 </div>
-                <p class="text-xs text-[var(--text-muted)]">{{ rule.patterns|join(', ')[:50] }}{% if rule.patterns|join(', ')|length > 50 %}...{% endif %}</p>
+                <p class="text-xs text-[var(--text-muted)]">{{ rule.patterns|join(', ') }}</p>
             </div>
             {% endfor %}
         </div>
