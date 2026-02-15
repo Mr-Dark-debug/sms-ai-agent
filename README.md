@@ -174,16 +174,33 @@ rate_limit:
 
 ### Personality Customization
 
-Edit `~/.config/sms-ai-agent/personality.md` to customize AI behavior:
+You can fully customize the AI's personality and behavior by editing two key files in your config directory (`~/.config/sms-ai-agent/`):
 
-```markdown
-# Personality Instructions
+#### 1. `personality.md` - The "Soul" of Your AI
+This file defines how the AI speaks, reacts, and behaves. You can customize:
+- **Language Style**: Hinglish, English, or any mix
+- **Tone**: Friendly, sarcastic, formal, casual
+- **Behavioral Rules**: How to handle flirting, abuse, confusion
+- **Vocabulary**: Custom slang, phrases, expressions
+- **Example Dialogues**: Sample conversations for reference
 
-You are a friendly SMS assistant. Your responses should be:
-- Concise (under 300 characters)
-- Friendly and conversational
-- Helpful and informative
-```
+Edit at: `~/.config/sms-ai-agent/personality.md`
+
+#### 2. `agent.md` - The "Brain" of Your AI
+This file controls the operational logic:
+- **Input Processing**: How to clean and process incoming messages
+- **Loop Prevention**: Preventing infinite self-reply loops
+- **Response Rules**: Length limits, formatting rules
+- **Fallback Behavior**: How to respond when confused
+- **Priority Hierarchy**: Security, context, personality order
+
+Edit at: `~/.config/sms-ai-agent/agent.md`
+
+#### 💡 Pro Tips for Customization:
+- Keep responses short (under 160 characters) for natural SMS feel
+- Use lowercase - real friends don't capitalize every sentence
+- Add local slang and phrases to make it feel more personal
+- The AI mirrors your energy - customize it to match your style!
 
 ### Rules Engine
 
