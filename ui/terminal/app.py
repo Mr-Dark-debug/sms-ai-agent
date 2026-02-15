@@ -78,7 +78,7 @@ class DashboardWidget(Container):
             with Horizontal(id="quick-actions"):
                 yield Button("🔄 Refresh", id="btn-refresh", variant="default")
                 yield Button("🧪 Test", id="btn-test", variant="primary")
-                yield Button("⚙️ Settings", id="btn-settings", variant="secondary")
+                yield Button("⚙️ Settings", id="btn-settings", variant="default")
     
     def on_mount(self) -> None:
         """Start update timer."""
