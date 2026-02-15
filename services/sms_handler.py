@@ -656,7 +656,7 @@ class SMSHandler:
     
     def get_device_info(self) -> Dict[str, Any]:
         """
-        Get device telephony information.
+        Get device telephony information including SIM and network details.
         
         Returns:
             Dictionary with device info
@@ -673,10 +673,13 @@ class SMSHandler:
             )
             
             if result.returncode == 0:
-                return json.loads(result.stdout)
+                info = json.loads(result.stdout)
+                # Add extra fields if they are known but missing
+                info["available"] = True
+                return info
         
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to get device info: {e}")
         
         return {"available": False}
 

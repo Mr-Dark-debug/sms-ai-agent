@@ -482,10 +482,14 @@ async def get_status(request: Request):
     stats = database.get_statistics()
     llm_status = ai_responder.test_connection() if ai_responder.llm else {"llm_available": False}
     guardrail_status = guardrails.get_status()
+    device_info = sms_handler.get_device_info()
     
     return {
         "database": stats,
-        "sms": {"available": sms_handler.is_available},
+        "sms": {
+            "available": sms_handler.is_available,
+            "device": device_info
+        },
         "llm": llm_status,
         "guardrails": guardrail_status,
         "timestamp": datetime.utcnow().isoformat(),

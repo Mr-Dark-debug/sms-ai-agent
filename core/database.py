@@ -236,7 +236,16 @@ class Database:
                 message_id = cursor.lastrowid
                 
                 # Update conversation stats
-                self._update_conversation(conn, phone_number)
+                conn.execute(
+                    """
+                    INSERT INTO conversations (phone_number, last_message_at, message_count)
+                    VALUES (?, CURRENT_TIMESTAMP, 1)
+                    ON CONFLICT(phone_number) DO UPDATE SET
+                        last_message_at = CURRENT_TIMESTAMP,
+                        message_count = message_count + 1
+                    """,
+                    (phone_number,)
+                )
                 
                 return message_id
         except sqlite3.Error as e:

@@ -1,24 +1,50 @@
 # SMS AI Agent
 
-```text
- ___________________________________________________________
-|  _______________________________________________________  |
-| |                                                       | |
-| |   _____ __  __ ____        _    ___      _    ____    | |
-| |  / ___/|  \/  / ___|      / \  |_ _|    / \  / ___|   | |
-| |  \___ \| |\/| \___ \     / _ \  | |    / _ \ \___ \   | |
-| |   ___) | |  | |___) |   / ___ \ | |   / ___ \ ___) |  | |
-| |  |____/|_|  |_|____/   /_/   \_\___| /_/   \_\____/   | |
-| |                                                       | |
-| |      ____  _____ _   _ _____ _   _ _____              | |
-| |     / ___|| ____| \ | | ____| \ | |_   _|             | |
-| |    | |  _ |  _| |  \| |  _| |  \| | | |               | |
-| |    | |_| || |___| |\  | |___| |\  | | |               | |
-| |     \____||_____|_| \_|_____|_| \_| |_|               | |
-| |                                                       | |
-| |_______________________________________________________| |
-|___________________________________________________________|
-```
+<div align="center">
+  <svg width="800" height="300" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- Obsidian Background -->
+    <rect width="800" height="300" fill="#0A0A0B" rx="10"/>
+    
+    <!-- Synthwave Gradient -->
+    <defs>
+      <linearGradient id="synthGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#7000FF;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+
+    <!-- Pinstripe Borders -->
+    <rect x="10" y="10" width="780" height="280" fill="none" stroke="url(#synthGradient)" stroke-width="1" rx="5" opacity="0.5"/>
+    <line x1="10" y1="240" x2="790" y2="240" stroke="url(#synthGradient)" stroke-width="1" opacity="0.3"/>
+    
+    <!-- BIOS Style Dividers -->
+    <line x1="266" y1="240" x2="266" y2="290" stroke="url(#synthGradient)" stroke-width="1" opacity="0.3"/>
+    <line x1="533" y1="240" x2="533" y2="290" stroke="url(#synthGradient)" stroke-width="1" opacity="0.3"/>
+
+    <!-- Main Title (Pixel Font Aesthetic) -->
+    <text x="50%" y="130" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-weight="900" font-size="62" fill="url(#synthGradient)" filter="url(#glow)" style="letter-spacing: 4px;">SMS-AI-AGENT</text>
+    
+    <!-- Tagline (Courier Monospace) -->
+    <text x="50%" y="180" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="18" fill="#FF8C00" opacity="0.8" style="letter-spacing: 2px;">NEURAL COMMAND-LINE INTERFACE v1.0.0</text>
+    
+    <!-- BIOS Sections -->
+    <text x="30" y="265" font-family="'Courier New', Courier, monospace" font-size="12" fill="#7000FF">STATUS: OPERATIONAL</text>
+    <text x="30" y="280" font-family="'Courier New', Courier, monospace" font-size="10" fill="#7000FF" opacity="0.6">CORE_RECOVERY_LOADED</text>
+    
+    <text x="286" y="265" font-family="'Courier New', Courier, monospace" font-size="12" fill="#FF8C00">MODE: AI_DAEMON</text>
+    <text x="286" y="280" font-family="'Courier New', Courier, monospace" font-size="10" fill="#FF8C00" opacity="0.6">LISTENING_ON_PORT_8080</text>
+    
+    <text x="553" y="265" font-family="'Courier New', Courier, monospace" font-size="12" fill="#7000FF">ENCRYPTION: ACTIVE</text>
+    <text x="553" y="280" font-family="'Courier New', Courier, monospace" font-size="10" fill="#7000FF" opacity="0.6">RSA_2048_BIT_SECURED</text>
+  </svg>
+</div>
 
 > **IMPORTANT: Termux:API Setup Required**
 > For this agent to read or send SMS, you **MUST** install the Termux:API components:

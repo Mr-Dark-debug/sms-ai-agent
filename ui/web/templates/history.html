@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ phone }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col h-[calc(100vh-12rem)] max-h-[800px] animate-fade-in">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-t-2xl">
+        <div class="flex items-center gap-3">
+            <a href="/messages/conversations" class="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold">{{ phone }}</h1>
+                <p class="text-xs text-[var(--text-muted)]">Conversation History</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="location.reload()" class="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Chat Area -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--bg-tertiary)] border-x border-[var(--border)]" id="chat-container">
+        {% if history %}
+            {% for msg in history %}
+                <div class="flex {% if msg.direction == 'outgoing' %}justify-end{% else %}justify-start{% endif %}">
+                    <div class="max-w-[80%] sm:max-w-[70%] rounded-2xl p-4 shadow-sm
+                        {% if msg.direction == 'outgoing' %}
+                            bg-gradient-to-br from-cyan-600 to-blue-700 text-white rounded-tr-none
+                        {% else %}
+                            bg-[var(--bg-secondary)] border border-[var(--border)] rounded-tl-none
+                        {% endif %}">
+                        <p class="text-sm whitespace-pre-wrap">{{ msg.message }}</p>
+                        <div class="mt-2 flex items-center justify-between gap-4 text-[10px] {% if msg.direction == 'outgoing' %}text-cyan-100{% else %}text-[var(--text-muted)]{% endif %}">
+                            <span>{{ msg.timestamp }}</span>
+                            {% if msg.direction == 'outgoing' %}
+                                <span><i class="fas {% if msg.status == 'sent' %}fa-check{% elif msg.status == 'delivered' %}fa-check-double{% elif msg.status == 'failed' %}fa-times text-red-300{% else %}fa-clock{% endif %}"></i> {{ msg.status|title }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="flex items-center justify-center h-full text-[var(--text-muted)]">
+                <p>No messages in this conversation</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Reply Footer -->
+    <div class="p-4 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-b-2xl">
+        <form id="reply-form" class="flex gap-2">
+            <input type="hidden" name="phone_number" value="{{ phone }}">
+            <input type="text" name="message" id="reply-input" placeholder="Type a message..." required
+                   class="flex-1 px-4 py-2 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+            <button type="submit" class="p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl aspect-square flex items-center justify-center">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Scroll to bottom of chat
+const chatContainer = document.getElementById('chat-container');
+chatContainer.scrollTop = chatContainer.scrollHeight;
+
+// Handle reply
+document.getElementById('reply-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('reply-input');
+    const message = input.value;
+    if (!message) return;
+    
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/send-sms', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                phone_number: '{{ phone }}',
+                message: message
+            })
+        });
+        
+        if (response.ok) {
+            input.value = '';
+            location.reload();
+        } else {
+            alert('Failed to send message');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error sending message');
+    } finally {
+        btn.disabled = false;
+    }
+};
+</script>
+{% endblock %}

@@ -76,25 +76,50 @@
     </div>
     
     <!-- Quick Actions -->
-    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
-        <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
-        <div class="flex flex-wrap gap-3">
-            <a href="/test" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl flex items-center gap-2">
-                <i class="fas fa-flask"></i>
-                <span>Test Response</span>
-            </a>
-            <a href="/settings" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </a>
-            <a href="/messages" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
-                <i class="fas fa-comments"></i>
-                <span>View Messages</span>
-            </a>
-            <a href="/logs" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
-                <i class="fas fa-scroll"></i>
-                <span>Logs</span>
-            </a>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+            <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
+            <div class="flex flex-wrap gap-3">
+                <a href="/test" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl flex items-center gap-2">
+                    <i class="fas fa-flask"></i>
+                    <span>Test Response</span>
+                </a>
+                <a href="/settings" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/messages/conversations" class="px-4 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl flex items-center gap-2">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat History</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Device Info -->
+        <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+            <h2 class="text-lg font-semibold mb-4">Device Information</h2>
+            {% if device_info %}
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-[var(--text-muted)]">Phone Number</p>
+                    <p class="font-medium">{{ device_info.phone_number|default('Unknown') }}</p>
+                </div>
+                <div>
+                    <p class="text-[var(--text-muted)]">Network</p>
+                    <p class="font-medium">{{ device_info.network_operator_name|default('Unknown') }}</p>
+                </div>
+                <div>
+                    <p class="text-[var(--text-muted)]">SIM Operator</p>
+                    <p class="font-medium">{{ device_info.sim_operator_name|default('Unknown') }}</p>
+                </div>
+                <div>
+                    <p class="text-[var(--text-muted)]">Network Type</p>
+                    <p class="font-medium">{{ device_info.network_type|default('Unknown') }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-yellow-400 text-sm italic">Device info unavailable. Ensure Termux:API has Phone permission.</p>
+            {% endif %}
         </div>
     </div>
     
