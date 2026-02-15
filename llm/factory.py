@@ -11,6 +11,7 @@ from typing import Optional, Type, Dict, Any
 from .base import BaseLLMProvider, LLMConfig
 from .openrouter import OpenRouterProvider
 from .ollama import OllamaProvider
+from .groq import GroqProvider
 from core.exceptions import LLMError, ConfigError
 from core.logging import get_logger
 
@@ -21,6 +22,7 @@ logger = get_logger("llm.factory")
 PROVIDERS: Dict[str, Type[BaseLLMProvider]] = {
     "openrouter": OpenRouterProvider,
     "ollama": OllamaProvider,
+    "groq": GroqProvider,
 }
 
 
@@ -145,6 +147,7 @@ class LLMFactory:
             Dictionary mapping provider names to descriptions
         """
         return {
+            "groq": "Groq - High-performance LLM inference",
             "openrouter": "OpenRouter - Multi-provider LLM gateway",
             "ollama": "Ollama - Local LLM runtime",
         }
@@ -161,6 +164,7 @@ class LLMFactory:
             Recommended model identifier
         """
         recommendations = {
+            "groq": "openai/gpt-oss-120b",
             "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
             "ollama": "llama3",
         }

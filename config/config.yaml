@@ -10,32 +10,22 @@ debug: false
 
 # LLM Provider Configuration
 llm:
-  # Provider: "openrouter" or "ollama"
-  provider: "openrouter"
+  # Provider: "groq", "openrouter" or "ollama"
+  provider: "groq"
   
   # Model identifier
-  # Use "openrouter/free" to randomly select from FREE models
-  # (recommended for zero-cost usage)
-  # Other free models include:
-  #   - meta-llama/llama-3.3-70b-instruct:free
-  #   - openai/gpt-4o-mini (limited free)
-  #   - anthropic/claude-3.5-sonnet (limited free)
-  # Ollama examples (local, no API cost):
-  #   - llama3
-  #   - mistral
-  #   - gemma
-  model: "openrouter/free"
+  model: "openai/gpt-oss-120b"
   
-  # API key is loaded from environment variable OPENROUTER_API_KEY
+  # API key is loaded from environment variable GROQ_API_KEY
   # or SMS_AGENT_LLM_API_KEY, or stored in .env file
   api_key: ""
   
-  # API base URL (default for OpenRouter)
-  api_base: "https://openrouter.ai/api/v1"
+  # API base URL (default for Groq)
+  api_base: "https://api.groq.com/openai/v1"
   
   # Generation parameters
   temperature: 0.7          # 0.0 - 2.0, higher = more creative
-  max_tokens: 150           # Maximum response length in tokens
+  max_tokens: 300           # Maximum response length in tokens
   top_p: 0.9               # Nucleus sampling parameter
   
   # Ollama-specific settings (if using Ollama)

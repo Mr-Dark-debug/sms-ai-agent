@@ -158,7 +158,7 @@ class SecurityManager:
         Checks environment variables and .env file.
         
         Args:
-            provider: Provider name (e.g., "openrouter", "ollama")
+            provider: Provider name (e.g., "openrouter", "ollama", "groq")
             
         Returns:
             API key if found, None otherwise
@@ -167,6 +167,7 @@ class SecurityManager:
         env_mappings = {
             "openrouter": ["OPENROUTER_API_KEY", "SMS_AGENT_LLM_API_KEY"],
             "ollama": ["OLLAMA_API_KEY"],
+            "groq": ["GROQ_API_KEY", "SMS_AGENT_LLM_API_KEY"],
         }
         
         keys_to_check = env_mappings.get(provider, [f"{provider.upper()}_API_KEY"])
@@ -190,6 +191,7 @@ class SecurityManager:
         env_mappings = {
             "openrouter": "OPENROUTER_API_KEY",
             "ollama": "OLLAMA_API_KEY",
+            "groq": "GROQ_API_KEY",
         }
         
         var_name = env_mappings.get(provider, f"{provider.upper()}_API_KEY")
@@ -206,6 +208,8 @@ class SecurityManager:
         
         # Update with new key
         existing[var_name] = api_key
+        # Also update the generic SMS_AGENT_LLM_API_KEY if this is the active provider
+        # (This is a bit complex since SecurityManager doesn't know the active provider easily)
         
         # Write back to .env file
         with open(self.env_file, "w") as f:
@@ -244,6 +248,10 @@ class SecurityManager:
         if provider == "openrouter":
             # OpenRouter keys typically start with "sk-or-"
             return len(api_key) >= 20 and (api_key.startswith("sk-or-") or api_key.startswith("sk-"))
+        
+        elif provider == "groq":
+            # Groq keys typically start with "gsk_"
+            return len(api_key) >= 20 and api_key.startswith("gsk_")
         
         elif provider == "ollama":
             # Ollama doesn't require API keys by default
@@ -530,6 +538,7 @@ echo "All SMS AI Agent data has been deleted."
             "api_keys_configured": {
                 "openrouter": self.has_api_key("openrouter"),
                 "ollama": self.has_api_key("ollama"),
+                "groq": self.has_api_key("groq"),
             },
             "env_file_exists": self.env_file.exists(),
             "env_file_permissions": oct(self.env_file.stat().st_mode)[-3:] if self.env_file.exists() else None,

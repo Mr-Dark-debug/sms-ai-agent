@@ -145,6 +145,7 @@ async def settings_page(request: Request):
     api_keys = {
         "openrouter": security.has_api_key("openrouter"),
         "ollama": security.has_api_key("ollama"),
+        "groq": security.has_api_key("groq"),
     }
     
     # Get available models
@@ -161,7 +162,7 @@ async def settings_page(request: Request):
             "request": request,
             "config": config,
             "api_keys": api_keys,
-            "models": models[:20],  # Limit to 20 for UI
+            "models": models[:100],  # Limit to 100 for UI
             "page": "settings"
         }
     )
@@ -326,12 +327,19 @@ async def update_settings(request: Request, settings: SettingsUpdate):
     database = request.app.state.database
     
     try:
+        reinit_llm = False
         if settings.llm_provider is not None:
-            config.llm.provider = settings.llm_provider
+            if config.llm.provider != settings.llm_provider:
+                config.llm.provider = settings.llm_provider
+                # Update API key for the new provider
+                config.llm.api_key = request.app.state.security.get_api_key(settings.llm_provider) or ""
+                reinit_llm = True
             database.set_setting("llm_provider", settings.llm_provider)
         
         if settings.llm_model is not None:
-            config.llm.model = settings.llm_model
+            if config.llm.model != settings.llm_model:
+                config.llm.model = settings.llm_model
+                reinit_llm = True
             database.set_setting("llm_model", settings.llm_model)
         
         if settings.llm_temperature is not None:
@@ -353,6 +361,11 @@ async def update_settings(request: Request, settings: SettingsUpdate):
         if settings.guardrail_max_length is not None:
             config.guardrail.max_response_length = settings.guardrail_max_length
             database.set_setting("guardrail_max_length", settings.guardrail_max_length)
+        
+        if reinit_llm:
+            from llm.factory import create_llm_provider
+            request.app.state.ai_responder.llm = create_llm_provider(config=config)
+            logger.info(f"LLM reinitialized: {config.llm.provider} - {config.llm.model}")
         
         return {"success": True, "message": "Settings updated"}
     

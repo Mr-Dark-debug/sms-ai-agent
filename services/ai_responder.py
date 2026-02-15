@@ -152,27 +152,20 @@ class AIResponder:
     
     def _get_default_personality(self) -> str:
         """Get default personality instructions."""
-        return """You are a friendly and helpful SMS assistant. Your responses should be:
-- Concise and to the point (under 300 characters)
-- Friendly and conversational
-- Helpful and informative
-- Professional but approachable
-
-Avoid:
-- Long explanations
-- Unnecessary details
-- Technical jargon
-- Sensitive personal information"""
+        return """You are a chill, helpful person responding via SMS. Your vibe is:
+- Casual and friendly (not a corporate bot)
+- Concise and natural (like a real text message)
+- Helpful but laid back
+- Use slang or abbreviations occasionally if it fits the conversation"""
     
     def _get_default_agent_rules(self) -> str:
         """Get default agent rules."""
-        return """As an SMS assistant, you must:
-1. Never share personal information about yourself or others
-2. Never generate harmful or inappropriate content
-3. Keep responses under 300 characters for SMS compatibility
-4. Be helpful while maintaining appropriate boundaries
-5. Decline requests that could be harmful or illegal
-6. If unsure about a request, respond with a polite clarification request"""
+        return """As a human-like SMS responder:
+1. Keep it short (under 250 characters)
+2. Don't be overly formal or robotic
+3. Don't repeat yourself
+4. Protect privacy but don't sound like a lawyer
+5. If you don't know something, just say it naturally"""
     
     def respond(
         self,
@@ -359,20 +352,28 @@ Avoid:
         messages = []
         
         # System message
-        system_content = f"{self.personality}\n\n{self.agent_rules}"
+        system_content = f"### YOUR PERSONA\n{self.personality}\n\n### OPERATIONAL GUIDELINES\n{self.agent_rules}"
+        system_content += "\n\n### CRITICAL: HUMAN-LIKE BEHAVIOR"
+        system_content += "\n- DO NOT sound like an AI assistant. Avoid phrases like 'How can I help you today?' or 'I am here to assist'."
+        system_content += "\n- Talk like a real person sending an SMS. Use casual language, occasional abbreviations, and match the user's energy/vibe."
+        system_content += "\n- If the user is casual, be casual. If they are brief, be brief."
+        system_content += "\n- Be helpful but keep it natural and conversational, like a friend or a personal assistant would."
         
         # Add contact-specific context if available
         contact = self.database.get_contact(phone_number)
         if contact:
-            system_content += "\n\n### CURRENT CONVERSATION CONTEXT"
+            system_content += "\n\n### RECIPIENT INFORMATION (CRITICAL)"
+            system_content += f"\nYou are currently responding to {phone_number}."
             if contact.get("name"):
-                system_content += f"\n- Talking to: {contact['name']}"
+                system_content += f"\n- Name of person: {contact['name']}"
             if contact.get("relation"):
-                system_content += f"\n- Relation: {contact['relation']}"
+                system_content += f"\n- Your relationship to this person: {contact['relation']}"
             if contact.get("age"):
                 system_content += f"\n- Age: {contact['age']}"
             if contact.get("custom_prompt"):
-                system_content += f"\n- Specific Instructions: {contact['custom_prompt']}"
+                system_content += f"\n- IMPORTANT INSTRUCTIONS FOR THIS CONTACT: {contact['custom_prompt']}"
+            
+            system_content += "\n\nYou MUST adapt your tone and style based on the relationship and personality described above."
         
         system_content += f"\n\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"
         system_content += f"\nKeep your response under {self.config.guardrail.max_response_length} characters."

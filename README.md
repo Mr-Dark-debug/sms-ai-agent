@@ -26,12 +26,12 @@
 SMS AI Agent is a modular, secure SMS auto-responder for Android devices running through Termux. It operates in two modes:
 
 1. **Rule-based Template Responder** - Pattern matching with customizable response templates
-2. **AI-powered Responder** - Uses LLMs (OpenRouter/Ollama) for contextual responses
+2. **AI-powered Responder** - Uses LLMs (Groq/OpenRouter/Ollama) for contextual responses
 
 ### Key Features
 
 - 🔒 **Security First** - API keys in .env, no hardcoded secrets, guardrail system
-- 🤖 **LLM Integration** - OpenRouter (100+ models) and Ollama (local LLM) support
+- 🤖 **LLM Integration** - **Groq (Lightning fast)**, OpenRouter (100+ models), and Ollama (local LLM) support
 - 📝 **Rules Engine** - Regex, keyword, and pattern matching with priorities
 - ⚡ **Rate Limiting** - Per-recipient and global rate limits to prevent abuse
 - 🛡️ **Guardrails** - PII detection, content filtering, SMS length constraints
@@ -39,6 +39,7 @@ SMS AI Agent is a modular, secure SMS auto-responder for Android devices running
 - 💾 **SQLite Storage** - Message history, logs, and settings persistence
 - 🔄 **Auto-start** - Termux:Boot integration for device startup
 - 👤 **Contact Personalization** - Set specific AI instructions, names, and relations for individual phone numbers.
+- 🔁 **Loop Protection** - Advanced idempotency and echo-detection to prevent infinite self-reply loops.
 
 ### 👤 Contact Personalization & Per-Number AI
 
@@ -84,6 +85,7 @@ pkg install python python-pip termux-api git
 ```
 
 ### LLM Provider (Choose One)
+- **Groq (Recommended)**: Ultra-fast inference. API key from [console.groq.com](https://console.groq.com/keys). Default model: `llama-3.3-70b-versatile`.
 - **OpenRouter**: API key from [openrouter.ai](https://openrouter.ai/keys)
 - **Ollama**: Local installation at [ollama.ai](https://ollama.ai)
 

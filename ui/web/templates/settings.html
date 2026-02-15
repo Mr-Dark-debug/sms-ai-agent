@@ -20,6 +20,28 @@
     <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
         <h2 class="text-lg font-semibold mb-4">API Keys</h2>
         <div class="space-y-4">
+            <!-- Groq -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-tertiary)] rounded-xl gap-4 border-l-4 border-orange-500">
+                <div>
+                    <h3 class="font-medium">Groq (Recommended)</h3>
+                    <p class="text-sm text-[var(--text-muted)]">High-performance LLM inference</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    {% if api_keys.groq %}
+                    <span class="flex items-center gap-2 text-green-400 text-sm">
+                        <i class="fas fa-check-circle"></i>Configured
+                    </span>
+                    {% else %}
+                    <span class="flex items-center gap-2 text-yellow-400 text-sm">
+                        <i class="fas fa-exclamation-circle"></i>Not Set
+                    </span>
+                    {% endif %}
+                    <button onclick="showApiKeyModal('groq')" class="px-3 py-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 rounded-lg text-sm text-white">
+                        {% if api_keys.groq %}Update{% else %}Configure{% endif %}
+                    </button>
+                </div>
+            </div>
+
             <!-- OpenRouter -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-tertiary)] rounded-xl gap-4">
                 <div>
@@ -64,7 +86,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm text-[var(--text-muted)] mb-2">Provider</label>
-                <select id="llm-provider" class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                <select id="llm-provider" onchange="onProviderChange()" class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                    <option value="groq" {% if config.llm.provider == 'groq' %}selected{% endif %}>Groq (Fastest)</option>
                     <option value="openrouter" {% if config.llm.provider == 'openrouter' %}selected{% endif %}>OpenRouter</option>
                     <option value="ollama" {% if config.llm.provider == 'ollama' %}selected{% endif %}>Ollama (Local)</option>
                 </select>
@@ -72,8 +95,21 @@
             
             <div>
                 <label class="block text-sm text-[var(--text-muted)] mb-2">Model</label>
-                <input type="text" id="llm-model" value="{{ config.llm.model }}" 
-                       class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-mono text-sm">
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="llm-model" value="{{ config.llm.model }}" list="model-list"
+                               class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-mono text-sm">
+                        <datalist id="model-list">
+                            {% for model in models %}
+                            <option value="{{ model }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <button onclick="fetchModels()" class="px-3 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--border)] rounded-xl text-xs flex items-center gap-1" title="Refresh model list">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <p class="text-[10px] text-[var(--text-muted)] mt-1">Type model ID or refresh to see list</p>
             </div>
             
             <div>
@@ -186,6 +222,58 @@
 
     let currentProvider = '';
 
+    function onProviderChange() {
+        const provider = document.getElementById('llm-provider').value;
+        const modelInput = document.getElementById('llm-model');
+        
+        // Suggest defaults if changing
+        if (provider === 'groq') {
+            modelInput.value = 'openai/gpt-oss-120b';
+        } else if (provider === 'openrouter') {
+            modelInput.value = 'meta-llama/llama-3.3-70b-instruct:free';
+        } else if (provider === 'ollama') {
+            modelInput.value = 'llama3';
+        }
+        
+        // Auto-fetch models for the new provider
+        fetchModels();
+    }
+
+    async function fetchModels() {
+        const provider = document.getElementById('llm-provider').value;
+        const datalist = document.getElementById('model-list');
+        
+        showToast(`Fetching models for ${provider}...`, 'info');
+        
+        try {
+            // We need to tell the server which provider to fetch models for
+            // Since the LLM might not be initialized with the new provider yet,
+            // we'll update settings first or use a specialized endpoint
+            
+            // For now, we'll just use the existing endpoint which uses the CURRENTly configured LLM
+            // To make this work better, we should update settings first
+            await saveSettings(false); // Silent save
+            
+            const response = await fetch('/api/models');
+            const data = await response.json();
+            
+            if (data.models && data.models.length > 0) {
+                datalist.innerHTML = '';
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    datalist.appendChild(option);
+                });
+                showToast(`Loaded ${data.models.length} models`, 'success');
+            } else {
+                showToast('No models found for this provider', 'warning');
+            }
+        } catch (error) {
+            console.error(error);
+            showToast('Failed to fetch models', 'error');
+        }
+    }
+
     function showApiKeyModal(provider) {
         currentProvider = provider;
         document.getElementById('modal-title').textContent = `Configure ${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`;
@@ -227,7 +315,7 @@
         }
     }
 
-    async function saveSettings() {
+    async function saveSettings(showNotification = true) {
         const settings = {
             llm_provider: document.getElementById('llm-provider').value,
             llm_model: document.getElementById('llm-model').value,
@@ -247,12 +335,12 @@
             
             const data = await response.json();
             if (data.success) {
-                showToast('Settings saved successfully', 'success');
+                if (showNotification) showToast('Settings saved successfully', 'success');
             } else {
-                showToast('Failed to save settings', 'error');
+                if (showNotification) showToast('Failed to save settings', 'error');
             }
         } catch (error) {
-            showToast('Failed to save settings', 'error');
+            if (showNotification) showToast('Failed to save settings', 'error');
         }
     }
 

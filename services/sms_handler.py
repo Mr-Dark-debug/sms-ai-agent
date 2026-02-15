@@ -143,6 +143,7 @@ class SMSHandler:
         self._callbacks: List[Callable[[SMSMessage], None]] = []
         self._listener_thread: Optional[threading.Thread] = None
         self._running = False
+        self.seen_ids = set()
         
         # Verify Termux API availability and permissions
         self._available = self._check_availability()
@@ -266,6 +267,18 @@ class SMSHandler:
                     f"Failed to send SMS: {error_msg or 'Unknown error'}",
                     details={"phone": phone_number, "returncode": result.returncode}
                 )
+            
+            # Add to seen_ids to avoid responding to our own message if it echoes back
+            content_preview = message[:50]
+            # Use same rounded timestamp as listener
+            ts_seconds = int(time.time() / 5) * 5
+            unique_string = f"{phone_number}|{ts_seconds}|{content_preview}"
+            msg_id = hashlib.sha256(unique_string.encode()).hexdigest()[:16]
+            self.seen_ids.add(msg_id)
+            # Add one with next 5s window just in case
+            unique_string_next = f"{phone_number}|{ts_seconds + 5}|{content_preview}"
+            msg_id_next = hashlib.sha256(unique_string_next.encode()).hexdigest()[:16]
+            self.seen_ids.add(msg_id_next)
             
             logger.info(f"SMS sent successfully to {self._mask_phone(phone_number)}")
             return True
@@ -457,7 +470,6 @@ class SMSHandler:
         Args:
             poll_interval: Seconds between polls
         """
-        seen_ids = set()
         first_run = True
         poll_count = 0
         
@@ -485,12 +497,14 @@ class SMSHandler:
                     
                     # Create more robust unique ID using message content
                     content_preview = msg.message[:50] if msg.message else ""
-                    unique_string = f"{msg.phone_number}|{msg.timestamp.isoformat()}|{content_preview}"
+                    # Use a rounded timestamp (to nearest 5 seconds) to handle slight variations in echo timestamps
+                    ts_seconds = int(msg.timestamp.timestamp() / 5) * 5
+                    unique_string = f"{msg.phone_number}|{ts_seconds}|{content_preview}"
                     import hashlib
                     msg_id = hashlib.sha256(unique_string.encode()).hexdigest()[:16]
                     
-                    if msg_id not in seen_ids:
-                        seen_ids.add(msg_id)
+                    if msg_id not in self.seen_ids:
+                        self.seen_ids.add(msg_id)
                         
                         # Skip processing on first run (just populate seen_ids)
                         if not first_run:
@@ -519,7 +533,7 @@ class SMSHandler:
                 
                 # Mark first run complete
                 if first_run:
-                    logger.info(f"Initial scan complete. Tracking {len(seen_ids)} existing messages")
+                    logger.info(f"Initial scan complete. Tracking {len(self.seen_ids)} existing messages")
                     first_run = False
                     
             except Exception as e:

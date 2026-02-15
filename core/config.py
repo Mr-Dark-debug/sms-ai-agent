@@ -29,14 +29,14 @@ class LLMConfig:
     including API credentials, model selection, and generation parameters.
     """
     # Provider settings
-    provider: str = "openrouter"  # openrouter, ollama
-    model: str = "openrouter/free"  # Use openrouter/free for random free model
+    provider: str = "groq"  # groq, openrouter, ollama
+    model: str = "openai/gpt-oss-120b"
     api_key: str = ""  # Loaded from environment
-    api_base: str = "https://openrouter.ai/api/v1"
+    api_base: str = "https://api.groq.com/openai/v1"
     
     # Generation parameters
     temperature: float = 0.7
-    max_tokens: int = 150
+    max_tokens: int = 300
     top_p: float = 0.9
     
     # Ollama-specific settings
@@ -48,17 +48,17 @@ class LLMConfig:
     
     def validate(self) -> None:
         """Validate LLM configuration parameters."""
-        if self.provider not in ["openrouter", "ollama"]:
+        if self.provider not in ["groq", "openrouter", "ollama"]:
             raise ConfigError(f"Invalid LLM provider: {self.provider}")
         
         if not 0 <= self.temperature <= 2:
             raise ConfigError(f"Temperature must be between 0 and 2, got {self.temperature}")
         
-        if self.max_tokens < 1 or self.max_tokens > 1000:
-            raise ConfigError(f"max_tokens must be between 1 and 1000, got {self.max_tokens}")
+        if self.max_tokens < 1 or self.max_tokens > 4096:
+            raise ConfigError(f"max_tokens must be between 1 and 4096, got {self.max_tokens}")
         
-        if self.provider == "openrouter" and not self.api_key:
-            raise ConfigError("OpenRouter API key is required")
+        if self.provider in ["openrouter", "groq"] and not self.api_key:
+            raise ConfigError(f"{self.provider.capitalize()} API key is required")
 
 
 @dataclass
@@ -435,6 +435,7 @@ def _apply_env_overrides(config: Config) -> None:
         "SMS_AGENT_LLM_OLLAMA_HOST": ("llm", "ollama_host"),
         # Legacy API key env vars
         "OPENROUTER_API_KEY": ("llm", "api_key"),
+        "GROQ_API_KEY": ("llm", "api_key"),
         
         # SMS settings
         "SMS_AGENT_SMS_AUTO_REPLY_ENABLED": ("sms", "auto_reply_enabled", bool),

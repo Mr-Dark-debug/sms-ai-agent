@@ -492,11 +492,17 @@ class OpenRouterProvider(BaseLLMProvider):
             List of model identifiers
         """
         try:
-            response = self._make_request("/models", {}, timeout=10)
-            models = response.get("data", [])
-            return [m.get("id") for m in models if m.get("id")]
+            client = self._get_client()
+            url = f"{self.api_base}/models"
+            headers = self._build_headers()
+            req = client["request"].Request(url, headers=headers, method="GET")
+            
+            with client["request"].urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode("utf-8"))
+                models = data.get("data", [])
+                return [m.get("id") for m in models if m.get("id")]
         except Exception as e:
-            logger.warning(f"Failed to get models: {e}")
+            logger.warning(f"Failed to get models from OpenRouter: {e}")
             # Return common models as fallback
             return [
                 "meta-llama/llama-3.3-70b-instruct:free",
