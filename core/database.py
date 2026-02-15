@@ -19,6 +19,9 @@ from contextlib import contextmanager
 import threading
 
 from .exceptions import DatabaseError
+from .logging import get_logger
+
+logger = get_logger("core.database")
 
 
 class Database:
