@@ -197,8 +197,28 @@ class Database:
         try:
             with self.transaction() as conn:
                 conn.executescript(schema_sql)
+            # Run migrations for existing databases
+            self._run_migrations()
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to initialize database schema: {e}")
+            
+    def _run_migrations(self) -> None:
+        """Run database migrations to ensure schema is up to date."""
+        try:
+            with self.transaction() as conn:
+                # Check if 'responded' column exists in 'messages' table
+                cursor = conn.execute("PRAGMA table_info(messages)")
+                columns = [row["name"] for row in cursor.fetchall()]
+                
+                if "responded" not in columns:
+                    logger.info("Migrating: Adding 'responded' column to messages table")
+                    conn.execute("ALTER TABLE messages ADD COLUMN responded INTEGER DEFAULT 0")
+                
+                # Check for other potential missing columns or tables
+                # Contacts table is already in schema_sql so CREATE TABLE IF NOT EXISTS handles it,
+                # but if we added columns to it later we'd check here.
+        except Exception as e:
+            logger.error(f"Migration failed: {e}")
     
     # === Message Operations ===
     
