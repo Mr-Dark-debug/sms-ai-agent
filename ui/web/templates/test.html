@@ -7,32 +7,34 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold">Test Message Simulator</h1>
-            <p class="text-[var(--text-muted)] mt-1">Test AI and rule-based responses</p>
+            <h1 class="text-2xl sm:text-3xl font-bold">Test & Debug</h1>
+            <p class="text-[var(--text-muted)] mt-1">Test AI responses and send SMS</p>
         </div>
     </div>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Input -->
+        <!-- Test AI Response -->
         <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
-            <h2 class="text-lg font-semibold mb-4">Incoming Message</h2>
+            <h2 class="text-lg font-semibold mb-4">
+                <i class="fas fa-robot mr-2 text-cyan-400"></i>Test AI Response
+            </h2>
             
             <div class="space-y-4">
                 <div>
-                    <label for="test-phone" class="block text-sm text-[var(--text-muted)] mb-2">Phone Number</label>
+                    <label for="test-phone" class="block text-sm text-[var(--text-muted)] mb-2">Phone Number (for context)</label>
                     <input type="tel" id="test-phone" value="+1234567890" 
                            class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
                 </div>
                 
                 <div>
                     <label for="test-message" class="block text-sm text-[var(--text-muted)] mb-2">Message</label>
-                    <textarea id="test-message" rows="4" placeholder="Enter a test message..."
+                    <textarea id="test-message" rows="3" placeholder="Enter a test message..."
                               class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"></textarea>
                 </div>
                 
                 <div class="flex items-center gap-4">
                     <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" id="use-ai" class="w-5 h-5 bg-[var(--bg-tertiary)] border-[var(--border)] rounded focus:ring-cyan-500">
+                        <input type="checkbox" id="use-ai" class="w-5 h-5 bg-[var(--bg-tertiary)] border-[var(--border)] rounded focus:ring-cyan-500" checked>
                         <span class="text-sm">Use AI (if available)</span>
                     </label>
                 </div>
@@ -44,15 +46,41 @@
             </div>
         </div>
         
-        <!-- Output -->
+        <!-- Send SMS -->
         <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
-            <h2 class="text-lg font-semibold mb-4">Response</h2>
+            <h2 class="text-lg font-semibold mb-4">
+                <i class="fas fa-sms mr-2 text-green-400"></i>Send SMS
+            </h2>
             
-            <div id="response-container" class="space-y-4">
-                <div class="text-center py-12 text-[var(--text-muted)]">
-                    <i class="fas fa-paper-plane text-4xl mb-4 opacity-50"></i>
-                    <p>Enter a message and click "Generate Response"</p>
+            <div class="space-y-4">
+                <div>
+                    <label for="send-phone" class="block text-sm text-[var(--text-muted)] mb-2">Recipient Number</label>
+                    <input type="tel" id="send-phone" placeholder="+1234567890" 
+                           class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-green-500 focus:ring-1 focus:ring-green-500">
                 </div>
+                
+                <div>
+                    <label for="send-message" class="block text-sm text-[var(--text-muted)] mb-2">Message</label>
+                    <textarea id="send-message" rows="3" placeholder="Enter message to send..."
+                              class="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl focus:border-green-500 focus:ring-1 focus:ring-green-500 resize-none"></textarea>
+                </div>
+                
+                <button onclick="sendSMS()" class="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
+                    <i class="fas fa-paper-plane"></i>
+                    Send SMS
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Response Output -->
+    <div class="bg-[var(--bg-secondary)] p-6 rounded-2xl border border-[var(--border)]">
+        <h2 class="text-lg font-semibold mb-4">Response Output</h2>
+        
+        <div id="response-container" class="space-y-4">
+            <div class="text-center py-12 text-[var(--text-muted)]">
+                <i class="fas fa-terminal text-4xl mb-4 opacity-50"></i>
+                <p>Test the AI response or send an SMS to see output here</p>
             </div>
         </div>
     </div>
@@ -149,18 +177,17 @@ async function runTest() {
             }
             
             container.innerHTML = `
-                <div class="p-4 bg-[var(--bg-tertiary)] rounded-xl mb-4">
+                <div class="p-4 bg-[var(--bg-tertiary)] rounded-xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-1 text-xs rounded-lg ${data.source === 'ai' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-green-500/20 text-green-400'}">
+                            ${data.source.toUpperCase()}
+                        </span>
+                        <span class="text-sm text-[var(--text-muted)]">${data.response.length} chars</span>
+                    </div>
                     <p class="text-lg">${data.response}</p>
-                    <p class="text-xs text-[var(--text-muted)] mt-2">${data.response.length} characters</p>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl">
-                        <p class="text-[var(--text-muted)] text-xs">Source</p>
-                        <p class="font-medium ${data.source === 'ai' ? 'text-cyan-400' : data.source === 'rules' ? 'text-green-400' : 'text-yellow-400'}">
-                            ${data.source.toUpperCase()}
-                        </p>
-                    </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl">
                         <p class="text-[var(--text-muted)] text-xs">Latency</p>
                         <p class="font-medium">${data.latency_ms}ms</p>
@@ -176,8 +203,8 @@ async function runTest() {
                     </div>
                     ` : ''}
                     ${data.matched_rule ? `
-                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl col-span-2">
-                        <p class="text-[var(--text-muted)] text-xs">Matched Rule</p>
+                    <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl">
+                        <p class="text-[var(--text-muted)] text-xs">Rule</p>
                         <p class="font-medium">${data.matched_rule}</p>
                     </div>
                     ` : ''}
@@ -194,6 +221,66 @@ async function runTest() {
             `;
         }
     } catch (error) {
+        container.innerHTML = `
+            <div class="text-center py-12 text-red-400">
+                <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                <p>Failed to connect to server</p>
+            </div>
+        `;
+    }
+}
+
+async function sendSMS() {
+    const phone = document.getElementById('send-phone').value.trim();
+    const message = document.getElementById('send-message').value.trim();
+    
+    if (!phone || !message) {
+        showToast('Please enter phone number and message', 'error');
+        return;
+    }
+    
+    const container = document.getElementById('response-container');
+    container.innerHTML = `
+        <div class="text-center py-12">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-green-400 mb-4"></i>
+            <p class="text-[var(--text-muted)]">Sending SMS...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/api/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone_number: phone,
+                message: message
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('SMS sent successfully!', 'success');
+            container.innerHTML = `
+                <div class="p-4 bg-green-500/20 border border-green-500/30 rounded-xl">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle text-green-400"></i>
+                        <span class="text-green-400">SMS sent successfully to ${phone}</span>
+                    </div>
+                    <p class="text-sm mt-2">${message}</p>
+                </div>
+            `;
+        } else {
+            showToast(data.detail || 'Failed to send SMS', 'error');
+            container.innerHTML = `
+                <div class="text-center py-12 text-red-400">
+                    <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                    <p>${data.detail || 'Failed to send SMS'}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        showToast('Failed to send SMS', 'error');
         container.innerHTML = `
             <div class="text-center py-12 text-red-400">
                 <i class="fas fa-exclamation-circle text-4xl mb-4"></i>

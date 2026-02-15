@@ -78,9 +78,15 @@ For more information, visit: https://github.com/sms-ai-agent
     )
     mode_group.add_argument(
         "--test",
-        type=str,
-        metavar="MESSAGE",
-        help="Test message handling with a sample message"
+        nargs="+",
+        metavar=("MESSAGE", "SENDER"),
+        help="Test message handling (usage: --test 'Hello' [SENDER_NUMBER])"
+    )
+    mode_group.add_argument(
+        "--send-sms",
+        nargs=2,
+        metavar=("NUMBER", "MESSAGE"),
+        help="Send an SMS message (usage: --send-sms +1234567890 'Hello')"
     )
     mode_group.add_argument(
         "--setup",
@@ -92,6 +98,11 @@ For more information, visit: https://github.com/sms-ai-agent
         type=str,
         metavar="KEY",
         help="Set API key for LLM provider"
+    )
+    mode_group.add_argument(
+        "--diagnose",
+        action="store_true",
+        help="Run diagnostic checks for SMS functionality"
     )
     
     # Optional arguments
@@ -334,7 +345,95 @@ def run_status_check(config: Config) -> None:
     print("\n" + "=" * 50 + "\n")
 
 
-def run_test_message(config: Config, message: str) -> None:
+def run_send_sms(config: Config, phone_number: str, message: str) -> None:
+    """Send an SMS message."""
+    from services.sms_handler import SMSHandler
+    
+    print(f"\nSending SMS to {phone_number}...")
+    print(f"Message: {message}")
+    print("-" * 50)
+    
+    sms_handler = SMSHandler(timeout=config.sms.sms_timeout)
+    
+    if not sms_handler.is_available:
+        print("✗ SMS handler not available!")
+        print("  Check Termux API installation and permissions.")
+        return
+    
+    try:
+        sms_handler.send_sms(phone_number, message)
+        print("✓ Message sent successfully")
+    except Exception as e:
+        print(f"✗ Failed to send message: {e}")
+
+
+def run_diagnosis() -> None:
+    """Run diagnostic checks for SMS functionality."""
+
+    from services.sms_handler import SMSHandler
+    
+    print("\n" + "=" * 50)
+    print("SMS AI Agent - Diagnostic Mode")
+    print("=" * 50 + "\n")
+    
+    handler = SMSHandler()
+    results = handler.diagnose()
+    
+    print("1. Termux API Installation")
+    print("-" * 30)
+    if results["termux_api_installed"]:
+        print("   ✓ termux-sms-list is installed")
+    else:
+        print("   ✗ termux-sms-list NOT found")
+        print("   → Run: pkg install termux-api")
+    
+    print("\n2. SMS List Capability")
+    print("-" * 30)
+    if results["sms_list_works"]:
+        print("   ✓ Can read SMS messages")
+        if results["sample_messages"]:
+            print(f"   Found {len(results['sample_messages'])} recent messages:")
+            for m in results["sample_messages"]:
+                print(f"     - {m['number']}: '{m['preview']}...' (type={m['type']})")
+    else:
+        print("   ✗ Cannot read SMS - permission issue likely")
+        print("   → Settings → Apps → Termux:API → Permissions")
+        print("   → Enable: SMS, Storage, Phone")
+    
+    print("\n3. SMS Send Capability")
+    print("-" * 30)
+    if results["sms_send_available"]:
+        print("   ✓ termux-sms-send is available")
+    else:
+        print("   ✗ termux-sms-send NOT found")
+    
+    print("\n4. Device Info")
+    print("-" * 30)
+    if results["device_info"]:
+        print(f"   Phone: {results['device_info'].get('phone_number', 'Unknown')}")
+        print(f"   Network: {results['device_info'].get('network_operator_name', 'Unknown')}")
+    else:
+        print("   ⚠ Could not get device info")
+    
+    if results["errors"]:
+        print("\n5. Errors Found")
+        print("-" * 30)
+        for err in results["errors"]:
+            print(f"   • {err}")
+    
+    print("\n" + "=" * 50)
+    
+    if not results["sms_list_works"]:
+        print("\n⚠ SMS PERMISSION REQUIRED!")
+        print("1. Go to: Settings → Apps → Termux:API → Permissions")
+        print("2. Enable: SMS")
+        print("3. Also check: Settings → Apps → Termux → Permissions")
+        print("4. Run this diagnosis again to verify")
+    
+    print()
+
+
+def run_test_message(config: Config, message: str, phone_number: str = "+1234567890") -> None:
     """Test message handling."""
     from core.security import SecurityManager
     from services.guardrails import GuardrailSystem
@@ -342,6 +441,7 @@ def run_test_message(config: Config, message: str) -> None:
     from rules.engine import RulesEngine
     
     print(f"\nTest Message: {message}")
+    print(f"From: {phone_number}")
     print("-" * 50)
     
     # Initialize components
@@ -363,7 +463,7 @@ def run_test_message(config: Config, message: str) -> None:
     
     # Generate response
     print("\nGenerating response...")
-    result = ai_responder.respond(message, "+1234567890")
+    result = ai_responder.respond(message, phone_number)
     
     print(f"\nResponse:")
     print(f"  Source: {result.source}")
@@ -452,9 +552,26 @@ def run_daemon(config: Config) -> None:
         agent_path=os.path.join(config.config_dir, "agent.md")
     )
     
+    # Verify permissions before starting
+    print("\nVerifying SMS permissions...")
     if not sms_handler.is_available:
-        logger.error("SMS handler not available. Check Termux:API installation.")
+        print("✗ SMS handler not available!")
+        print("\nPossible causes:")
+        print("1. Termux:API app not installed")
+        print("2. termux-api package not installed (run: pkg install termux-api)")
+        print("3. SMS permission not granted")
+        print("\nRun: python main.py --diagnose")
         return
+    
+    # Run diagnosis to confirm everything works
+    diag = sms_handler.diagnose()
+    if not diag["sms_list_works"]:
+        print("✗ Cannot read SMS messages - permission issue!")
+        print("Grant permission: Settings → Apps → Termux:API → Permissions → SMS")
+        print("\nRun: python main.py --diagnose")
+        return
+    
+    print("✓ SMS permissions verified")
     
     # Message handler callback
     def handle_message(msg):
@@ -508,7 +625,7 @@ def run_daemon(config: Config) -> None:
     
     # Start listener
     logger.info("SMS listener started")
-    sms_handler.start_listener(poll_interval=10)
+    sms_handler.start_listener(poll_interval=3)
     
     # Keep running
     try:
@@ -586,10 +703,16 @@ def main() -> int:
             run_terminal_ui(config)
         elif args.daemon:
             run_daemon(config)
+        elif args.diagnose:
+            run_diagnosis()
         elif args.status:
             run_status_check(config)
         elif args.test:
-            run_test_message(config, args.test)
+            message = args.test[0]
+            sender = args.test[1] if len(args.test) > 1 else "+1234567890"
+            run_test_message(config, message, sender)
+        elif args.send_sms:
+            run_send_sms(config, args.send_sms[0], args.send_sms[1])
         elif args.api_key:
             set_api_key(config, args.api_key, args.provider or "openrouter")
         else:

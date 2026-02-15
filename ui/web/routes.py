@@ -464,3 +464,33 @@ async def get_models(request: Request):
         return {"models": models}
     except Exception as e:
         return {"models": [], "error": str(e)}
+
+
+class SendSMSRequest(BaseModel):
+    """Send SMS request model."""
+    phone_number: str
+    message: str
+
+
+@router.post("/api/send-sms")
+async def send_sms(request: Request, sms_data: SendSMSRequest):
+    """Send an SMS message."""
+    sms_handler = request.app.state.sms_handler
+    
+    if not sms_handler.is_available:
+        raise HTTPException(status_code=503, detail="SMS not available. Check Termux:API installation.")
+    
+    try:
+        success = sms_handler.send_sms(
+            phone_number=sms_data.phone_number,
+            message=sms_data.message
+        )
+        
+        if success:
+            return {"success": True, "message": "SMS sent successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to send SMS")
+    
+    except Exception as e:
+        logger.error(f"Failed to send SMS: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,6 +1,6 @@
 """
 SMS Handler - Termux API integration for SMS operations
-=======================================================
+======================================================
 
 This module provides SMS functionality using Termux API,
 including:
@@ -13,11 +13,11 @@ including:
 import subprocess
 import json
 import re
+import hashlib
+import time
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass, field
-from pathlib import Path
-import threading
 
 from core.exceptions import SMSError
 from core.logging import get_logger
@@ -102,6 +102,16 @@ class SMSHandler:
             print(msg)
     """
     
+    # Android SMS type values
+    SMS_TYPE_MAP = {
+        1: "incoming",    # MESSAGE_TYPE_INBOX
+        2: "outgoing",    # MESSAGE_TYPE_SENT
+        3: "draft",       # MESSAGE_TYPE_DRAFT
+        4: "outgoing",    # MESSAGE_TYPE_OUTBOX
+        5: "failed",      # MESSAGE_TYPE_FAILED
+        6: "outgoing",    # MESSAGE_TYPE_QUEUED
+    }
+    
     def __init__(
         self,
         termux_api_path: str = "termux-sms-send",
@@ -125,7 +135,7 @@ class SMSHandler:
         self._listener_thread: Optional[threading.Thread] = None
         self._running = False
         
-        # Verify Termux API availability
+        # Verify Termux API availability and permissions
         self._available = self._check_availability()
         
         logger.info(
@@ -135,20 +145,63 @@ class SMSHandler:
     
     def _check_availability(self) -> bool:
         """
-        Check if Termux API is available.
+        Check if Termux API is available AND SMS permissions are granted.
         
         Returns:
-            True if Termux API commands are available
+            True if Termux API commands are available and SMS permissions granted
         """
         try:
-            # Try to run termux-telephony-deviceinfo as a test
+            # First check if termux-api commands exist
             result = subprocess.run(
-                ["termux-telephony-deviceinfo"],
+                ["which", "termux-sms-list"],
                 capture_output=True,
                 timeout=5
             )
-            return result.returncode == 0
-        except (subprocess.TimeoutExpired, FileNotFoundError):
+            if result.returncode != 0:
+                logger.error("termux-sms-list command not found")
+                return False
+            
+            # Actually try to list SMS (this tests permissions)
+            result = subprocess.run(
+                ["termux-sms-list", "-l", "1"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode != 0:
+                error = result.stderr.strip() if result.stderr else "Unknown error"
+                logger.error(f"SMS list failed: {error}")
+                
+                # Check for permission-related errors
+                if "permission" in error.lower() or "denied" in error.lower():
+                    logger.error("SMS permission not granted!")
+                    logger.error("Grant permission: Settings → Apps → Termux:API → Permissions → SMS")
+                return False
+            
+            # Also verify we can send (different permission)
+            try:
+                send_check = subprocess.run(
+                    ["which", "termux-sms-send"],
+                    capture_output=True,
+                    timeout=5
+                )
+                if send_check.returncode != 0:
+                    logger.warning("termux-sms-send not found")
+            except Exception:
+                pass
+            
+            logger.info("SMS permissions verified successfully")
+            return True
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Availability check timed out")
+            return False
+        except FileNotFoundError:
+            logger.error("Termux API commands not found")
+            return False
+        except Exception as e:
+            logger.error(f"Availability check failed: {e}")
             return False
     
     @property
@@ -282,11 +335,14 @@ class SMSHandler:
             # Convert to SMSMessage objects
             messages = []
             for msg_data in messages_data:
+                msg_type = msg_data.get("type", 1)
+                direction = self.SMS_TYPE_MAP.get(msg_type, "incoming")
+                
                 msg = SMSMessage(
                     phone_number=msg_data.get("number", msg_data.get("address", "")),
                     message=msg_data.get("body", msg_data.get("text", "")),
                     timestamp=self._parse_timestamp(msg_data.get("received", msg_data.get("date"))),
-                    direction="incoming" if msg_data.get("type", 1) == 1 else "outgoing",
+                    direction=direction,
                     thread_id=msg_data.get("thread_id"),
                     read=msg_data.get("read", 1) == 1,
                 )
@@ -337,14 +393,14 @@ class SMSHandler:
         """
         self._callbacks.append(callback)
     
-    def start_listener(self, poll_interval: int = 10) -> None:
+    def start_listener(self, poll_interval: int = 3) -> None:
         """
         Start listening for new messages.
         
         Uses polling to check for new messages periodically.
         
         Args:
-            poll_interval: Seconds between checks
+            poll_interval: Seconds between checks (default 3 seconds)
         """
         if self._running:
             return
@@ -356,7 +412,7 @@ class SMSHandler:
             daemon=True
         )
         self._listener_thread.start()
-        logger.info("Started SMS listener")
+        logger.info(f"Started SMS listener (poll interval: {poll_interval}s)")
     
     def stop_listener(self) -> None:
         """Stop the message listener."""
@@ -366,34 +422,144 @@ class SMSHandler:
         logger.info("Stopped SMS listener")
     
     def _listener_loop(self, poll_interval: int) -> None:
-        """Listener loop for polling messages."""
+        """
+        Listener loop for polling messages.
+        
+        Uses polling since Termux API doesn't support real-time SMS broadcast.
+        Improved with better logging and unique ID generation.
+        
+        Args:
+            poll_interval: Seconds between polls
+        """
         seen_ids = set()
+        first_run = True
+        poll_count = 0
+        
+        logger.info(f"SMS listener loop started (poll interval: {poll_interval}s)")
         
         while self._running:
+            poll_count += 1
             try:
                 # Get recent messages
-                messages = self.list_messages(limit=10)
+                messages = self.list_messages(limit=20)
+                logger.debug(f"Poll #{poll_count}: Found {len(messages)} total messages")
+                
+                new_incoming = []
                 
                 for msg in messages:
-                    # Create unique ID
-                    msg_id = f"{msg.phone_number}_{msg.timestamp.isoformat()}"
+                    # Only process incoming messages
+                    if msg.direction != "incoming":
+                        continue
                     
-                    if msg_id not in seen_ids and msg.direction == "incoming":
+                    # Create more robust unique ID using message content
+                    content_preview = msg.message[:50] if msg.message else ""
+                    unique_string = f"{msg.phone_number}|{msg.timestamp.isoformat()}|{content_preview}"
+                    msg_id = hashlib.sha256(unique_string.encode()).hexdigest()[:16]
+                    
+                    if msg_id not in seen_ids:
                         seen_ids.add(msg_id)
                         
-                        # Notify callbacks
+                        # Skip processing on first run (just populate seen_ids)
+                        if not first_run:
+                            new_incoming.append(msg)
+                            logger.info(
+                                f"NEW SMS DETECTED: From {msg.phone_number} - "
+                                f"'{msg.message[:30]}{'...' if len(msg.message) > 30 else ''}'"
+                            )
+                
+                # Process new messages through callbacks
+                if new_incoming:
+                    logger.info(f"Processing {len(new_incoming)} new incoming message(s)")
+                    for msg in new_incoming:
+                        logger.info(f"Dispatching to {len(self._callbacks)} callback(s)")
                         for callback in self._callbacks:
                             try:
                                 callback(msg)
                             except Exception as e:
-                                logger.error(f"Callback error: {e}")
+                                logger.error(f"Callback error: {e}", exc_info=True)
                 
+                # Mark first run complete
+                if first_run:
+                    logger.info(f"Initial scan complete. Tracking {len(seen_ids)} existing messages")
+                    first_run = False
+                    
             except Exception as e:
-                logger.error(f"Listener error: {e}")
+                logger.error(f"Listener loop error: {e}", exc_info=True)
             
             # Wait before next poll
-            import time
             time.sleep(poll_interval)
+    
+    def diagnose(self) -> Dict[str, Any]:
+        """
+        Run diagnostic checks for SMS functionality.
+        
+        Returns:
+            Dictionary with diagnostic results
+        """
+        results = {
+            "termux_api_installed": False,
+            "sms_list_works": False,
+            "sms_send_available": False,
+            "device_info": None,
+            "sample_messages": [],
+            "errors": []
+        }
+        
+        # Check 1: termux-sms-list exists
+        try:
+            check = subprocess.run(["which", "termux-sms-list"], capture_output=True, timeout=5)
+            results["termux_api_installed"] = check.returncode == 0
+        except Exception as e:
+            results["errors"].append(f"API check failed: {e}")
+        
+        # Check 2: Can list SMS
+        try:
+            result = subprocess.run(
+                ["termux-sms-list", "-l", "5"],
+                capture_output=True,
+                text=True,
+                timeout=15
+            )
+            if result.returncode == 0:
+                results["sms_list_works"] = True
+                try:
+                    messages = json.loads(result.stdout)
+                    results["sample_messages"] = [
+                        {
+                            "number": m.get("number", m.get("address", "unknown")),
+                            "preview": m.get("body", m.get("text", ""))[:50],
+                            "type": m.get("type", "unknown")
+                        }
+                        for m in messages[:3]
+                    ]
+                except json.JSONDecodeError:
+                    results["errors"].append("Invalid JSON from termux-sms-list")
+            else:
+                results["errors"].append(f"SMS list failed: {result.stderr}")
+        except Exception as e:
+            results["errors"].append(f"SMS list test failed: {e}")
+        
+        # Check 3: termux-sms-send exists
+        try:
+            check = subprocess.run(["which", "termux-sms-send"], capture_output=True, timeout=5)
+            results["sms_send_available"] = check.returncode == 0
+        except Exception as e:
+            results["errors"].append(f"Send check failed: {e}")
+        
+        # Check 4: Device info
+        try:
+            result = subprocess.run(
+                ["termux-telephony-deviceinfo"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                results["device_info"] = json.loads(result.stdout)
+        except Exception as e:
+            results["errors"].append(f"Device info failed: {e}")
+        
+        return results
     
     def _normalize_phone_number(self, phone: str) -> str:
         """
