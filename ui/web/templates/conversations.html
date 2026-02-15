@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Conversations - SMS AI Agent{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold">Conversations</h1>
+            <p class="text-[var(--text-muted)] mt-1">Chat history by contact</p>
+        </div>
+    </div>
+    
+    <!-- Conversations List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% if conversations %}
+            {% for conv in conversations %}
+            <a href="/messages/history/{{ conv.phone_number }}" class="card bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border)] hover:border-cyan-500/50 transition-all group">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-cyan-500/20 rounded-full flex items-center justify-center text-cyan-400">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-lg">{{ conv.phone_number }}</p>
+                            <p class="text-xs text-[var(--text-muted)]">{{ conv.message_count }} messages</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-[var(--text-muted)]">{{ conv.last_message_at }}</span>
+                </div>
+                
+                <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl">
+                    <p class="text-sm text-[var(--text-muted)] line-clamp-2">
+                        {% if conv.last_direction == 'outgoing' %}
+                        <span class="text-green-400">You:</span>
+                        {% endif %}
+                        {{ conv.last_message }}
+                    </p>
+                </div>
+                
+                <div class="mt-4 flex justify-end">
+                    <span class="text-xs text-cyan-400 group-hover:underline">View History →</span>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="col-span-full text-center py-16 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border)]">
+                <i class="fas fa-comments text-5xl text-[var(--text-muted)] mb-4 opacity-50"></i>
+                <p class="text-[var(--text-muted)]">No conversations found</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

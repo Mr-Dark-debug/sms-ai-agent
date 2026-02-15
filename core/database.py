@@ -361,6 +361,28 @@ class Database:
             (phone_number,)
         )
     
+    def get_conversations(self) -> List[Dict[str, Any]]:
+        """
+        Get all conversations ordered by last message.
+        
+        Returns:
+            List of conversation dictionaries
+        """
+        try:
+            with self.transaction() as conn:
+                cursor = conn.execute(
+                    """
+                    SELECT c.*, 
+                           (SELECT message FROM messages WHERE phone_number = c.phone_number ORDER BY timestamp DESC LIMIT 1) as last_message,
+                           (SELECT direction FROM messages WHERE phone_number = c.phone_number ORDER BY timestamp DESC LIMIT 1) as last_direction
+                    FROM conversations c
+                    ORDER BY last_message_at DESC
+                    """
+                )
+                return [dict(row) for row in cursor.fetchall()]
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to get conversations: {e}")
+    
     # === Rate Limit Operations ===
     
     def check_rate_limit(

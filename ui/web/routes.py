@@ -43,6 +43,7 @@ async def dashboard(request: Request):
     
     # Check SMS status
     sms_available = sms_handler.is_available
+    device_info = sms_handler.get_device_info() if sms_available else {}
     
     return templates.TemplateResponse(
         "dashboard.html",
@@ -52,6 +53,7 @@ async def dashboard(request: Request):
             "recent_messages": recent_messages,
             "llm_status": llm_status,
             "sms_available": sms_available,
+            "device_info": device_info,
             "config": config,
             "page": "dashboard"
         }
@@ -85,6 +87,45 @@ async def messages_page(
             "filters": {"phone": phone, "direction": direction},
             "limit": limit,
             "offset": offset,
+            "page": "messages"
+        }
+    )
+
+
+@router.get("/messages/conversations", response_class=HTMLResponse)
+async def conversations_page(request: Request):
+    """Render the conversations list page."""
+    templates = request.app.state.templates
+    database = request.app.state.database
+    
+    # Get all unique contacts with last message info
+    # We'll add a helper to database for this
+    conversations = database.get_conversations()
+    
+    return templates.TemplateResponse(
+        "conversations.html",
+        {
+            "request": request,
+            "conversations": conversations,
+            "page": "messages"
+        }
+    )
+
+
+@router.get("/messages/history/{phone}", response_class=HTMLResponse)
+async def chat_history_page(request: Request, phone: str):
+    """Render chat history for a specific number."""
+    templates = request.app.state.templates
+    database = request.app.state.database
+    
+    history = database.get_messages(phone_number=phone, limit=100, order_desc=False)
+    
+    return templates.TemplateResponse(
+        "history.html",
+        {
+            "request": request,
+            "phone": phone,
+            "history": history,
             "page": "messages"
         }
     )

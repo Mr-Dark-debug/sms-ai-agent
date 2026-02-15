@@ -107,7 +107,12 @@ def create_app(
     rules_engine = RulesEngine(config_dir=config.config_dir)
     
     sms_handler = SMSHandler(
-        timeout=config.sms.sms_timeout
+        timeout=config.sms.sms_timeout,
+        webhook_config={
+            "enabled": config.sms.webhook_enabled,
+            "url": config.sms.webhook_url,
+            "headers": config.sms.webhook_headers
+        }
     )
     
     ai_responder = AIResponder(
@@ -118,6 +123,56 @@ def create_app(
         personality_path=os.path.join(config.config_dir, "personality.md"),
         agent_path=os.path.join(config.config_dir, "agent.md")
     )
+
+    # Start SMS listener with callback
+    from core.rate_limiter import RateLimiter
+    rate_limiter = RateLimiter(
+        max_per_minute=config.rate_limit.max_messages_per_minute,
+        max_per_recipient_per_hour=config.rate_limit.max_per_recipient_per_hour,
+        max_per_recipient_per_day=config.rate_limit.max_per_recipient_per_day
+    )
+
+    def handle_incoming_sms(msg):
+        logger.info(f"Web listener: Received message from {msg.phone_number}")
+        
+        # Check rate limit
+        result = rate_limiter.check_and_record(msg.phone_number)
+        if not result.allowed:
+            logger.warning(f"Rate limited: {msg.phone_number}")
+            return
+        
+        # Store incoming message
+        msg_id = database.add_message(
+            direction="incoming",
+            phone_number=msg.phone_number,
+            message=msg.message,
+            status="delivered"
+        )
+        
+        # Check if auto-reply is enabled
+        if not config.sms.auto_reply_enabled:
+            return
+        
+        # Generate response
+        response = ai_responder.respond(msg.message, msg.phone_number)
+        
+        if response.response:
+            # Send response
+            try:
+                sms_handler.send_sms(msg.phone_number, response.response)
+                database.add_message(
+                    direction="outgoing",
+                    phone_number=msg.phone_number,
+                    message=response.response,
+                    status="sent",
+                    response_to=msg_id
+                )
+                logger.info(f"Sent response to {msg.phone_number}")
+            except Exception as e:
+                logger.error(f"Failed to send response: {e}")
+
+    sms_handler.on_message_received(handle_incoming_sms)
+    sms_handler.start_listener(poll_interval=3)
     
     # Store services in app state
     app.state.config = config
