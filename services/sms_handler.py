@@ -474,10 +474,6 @@ class SMSHandler:
                     if msg.direction != "incoming":
                         continue
                     
-                    # Ignore messages received before bot started
-                    if msg.timestamp < self.start_time:
-                        continue
-                    
                     # Create more robust unique ID using message content
                     content_preview = msg.message[:50] if msg.message else ""
                     unique_string = f"{msg.phone_number}|{msg.timestamp.isoformat()}|{content_preview}"

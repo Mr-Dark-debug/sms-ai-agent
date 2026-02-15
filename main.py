@@ -618,8 +618,10 @@ def run_daemon(config: Config) -> None:
         response = ai_responder.respond(msg.message, msg.phone_number)
         
         if response.response:
+            logger.info(f"Daemon: AI generated response for {msg.phone_number}: '{response.response[:30]}...'")
             # Send response
             try:
+                logger.info(f"Daemon: Attempting to send SMS to {msg.phone_number}")
                 sms_handler.send_sms(msg.phone_number, response.response)
                 database.add_message(
                     direction="outgoing",
@@ -627,9 +629,11 @@ def run_daemon(config: Config) -> None:
                     message=response.response,
                     status="sent"
                 )
-                logger.info(f"Sent response to {msg.phone_number}")
+                logger.info(f"Daemon: Successfully sent response to {msg.phone_number}")
             except Exception as e:
-                logger.error(f"Failed to send response: {e}")
+                logger.error(f"Daemon: Failed to send response to {msg.phone_number}: {e}", exc_info=True)
+        else:
+            logger.warning(f"Daemon: AI produced empty response for {msg.phone_number}")
     
     # Register callback and start listener
     sms_handler.on_message_received(handle_message)
