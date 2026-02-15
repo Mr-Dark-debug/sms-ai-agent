@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}AI Personality - SMS AI Agent{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">AI Personality & Behavior</h1>
+        <button onclick="savePersonality()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg">
+            <i class="fas fa-save mr-2"></i>Save Changes
+        </button>
+    </div>
+    
+    <!-- Personality -->
+    <div class="bg-gray-800 p-6 rounded-xl">
+        <h2 class="text-lg font-bold mb-4">
+            <i class="fas fa-user-astronaut mr-2 text-blue-400"></i>Personality Instructions
+        </h2>
+        <p class="text-sm text-gray-400 mb-4">
+            Define how the AI should write its responses. Include tone, style, and formatting preferences.
+        </p>
+        <textarea id="personality-text" rows="12" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg font-mono text-sm">{{ personality }}</textarea>
+    </div>
+    
+    <!-- Agent Rules -->
+    <div class="bg-gray-800 p-6 rounded-xl">
+        <h2 class="text-lg font-bold mb-4">
+            <i class="fas fa-shield-halved mr-2 text-orange-400"></i>Agent Behavioral Rules
+        </h2>
+        <p class="text-sm text-gray-400 mb-4">
+            Define constraints and rules the AI must follow. These override personality instructions.
+        </p>
+        <textarea id="agent-rules-text" rows="12" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg font-mono text-sm">{{ agent_rules }}</textarea>
+    </div>
+    
+    <!-- Preview -->
+    <div class="bg-gray-800 p-6 rounded-xl">
+        <h2 class="text-lg font-bold mb-4">
+            <i class="fas fa-eye mr-2 text-green-400"></i>Combined Preview
+        </h2>
+        <button onclick="previewCombined()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg mb-4">
+            Show Combined Instructions
+        </button>
+        <div id="combined-preview" class="hidden">
+            <pre class="bg-gray-900 p-4 rounded-lg text-sm overflow-auto max-h-96"></pre>
+        </div>
+    </div>
+    
+    <!-- Tips -->
+    <div class="bg-gray-800 p-6 rounded-xl">
+        <h2 class="text-lg font-bold mb-4">
+            <i class="fas fa-lightbulb mr-2 text-yellow-400"></i>Tips
+        </h2>
+        <ul class="space-y-2 text-sm text-gray-400">
+            <li><i class="fas fa-check text-green-400 mr-2"></i>Keep personality instructions clear and specific</li>
+            <li><i class="fas fa-check text-green-400 mr-2"></i>Mention the SMS character limit (300 chars)</li>
+            <li><i class="fas fa-check text-green-400 mr-2"></i>Include examples of good responses</li>
+            <li><i class="fas fa-check text-green-400 mr-2"></i>Use agent rules to prevent unwanted behaviors</li>
+            <li><i class="fas fa-check text-green-400 mr-2"></i>Test responses after making changes</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+function previewCombined() {
+    const personality = document.getElementById('personality-text').value;
+    const agentRules = document.getElementById('agent-rules-text').value;
+    const preview = document.getElementById('combined-preview');
+    
+    preview.querySelector('pre').textContent = `=== PERSONALITY ===\n${personality}\n\n=== AGENT RULES ===\n${agentRules}`;
+    preview.classList.toggle('hidden');
+}
+
+async function savePersonality() {
+    const personality = document.getElementById('personality-text').value;
+    const agentRules = document.getElementById('agent-rules-text').value;
+    
+    try {
+        const formData = new FormData();
+        formData.append('personality', personality);
+        formData.append('agent_rules', agentRules);
+        
+        const response = await fetch('/api/personality', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showToast('Personality settings saved', 'success');
+        } else {
+            showToast('Failed to save', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to save', 'error');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Rules - SMS AI Agent{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Response Rules</h1>
+        <button onclick="showAddRuleModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+            <i class="fas fa-plus mr-2"></i>Add Rule
+        </button>
+    </div>
+    
+    <!-- Rules List -->
+    <div class="space-y-4">
+        {% for rule in rules %}
+        <div class="bg-gray-800 p-6 rounded-xl">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-bold">{{ rule.name }}</h3>
+                    <p class="text-sm text-gray-400">Match Type: {{ rule.match_type }} | Priority: {{ rule.priority }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if rule.enabled %}
+                    <span class="px-2 py-1 text-xs bg-green-600 rounded">Enabled</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs bg-gray-600 rounded">Disabled</span>
+                    {% endif %}
+                    <button onclick="deleteRule('{{ rule.name }}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-sm text-gray-400 mb-2">Patterns</h4>
+                    <div class="flex flex-wrap gap-2">
+                        {% for pattern in rule.patterns %}
+                        <span class="px-2 py-1 bg-gray-700 rounded text-sm font-mono">{{ pattern }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm text-gray-400 mb-2">Responses</h4>
+                    <ul class="space-y-1">
+                        {% for response in rule.responses %}
+                        <li class="text-sm text-gray-300">• {{ response }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-gray-800 p-12 rounded-xl text-center">
+            <i class="fas fa-list-check text-4xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400">No rules configured</p>
+            <button onclick="showAddRuleModal()" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">
+                Add First Rule
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Rule Modal -->
+<div id="add-rule-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 p-6 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <h3 class="text-lg font-bold mb-4">Add New Rule</h3>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">Rule Name</label>
+                <input type="text" id="rule-name" placeholder="e.g., greeting" 
+                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+            </div>
+            
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">Match Type</label>
+                <select id="rule-match-type" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                    <option value="contains">Contains (default)</option>
+                    <option value="exact">Exact Match</option>
+                    <option value="startswith">Starts With</option>
+                    <option value="endswith">Ends With</option>
+                    <option value="regex">Regular Expression</option>
+                    <option value="keywords">Any Keyword</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">Patterns (one per line)</label>
+                <textarea id="rule-patterns" rows="3" placeholder="hello&#10;hi&#10;hey"
+                          class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg"></textarea>
+            </div>
+            
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">Responses (one per line, random selection)</label>
+                <textarea id="rule-responses" rows="3" placeholder="Hello! How can I help you?&#10;Hi there!"
+                          class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg"></textarea>
+            </div>
+            
+            <div>
+                <label class="block text-sm text-gray-400 mb-2">Priority (0-100, higher = more important)</label>
+                <input type="number" id="rule-priority" value="50" min="0" max="100"
+                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+            </div>
+        </div>
+        
+        <div class="flex justify-end gap-4 mt-6">
+            <button onclick="hideAddRuleModal()" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">Cancel</button>
+            <button onclick="saveRule()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">Save Rule</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAddRuleModal() {
+    document.getElementById('add-rule-modal').classList.remove('hidden');
+    document.getElementById('add-rule-modal').classList.add('flex');
+}
+
+function hideAddRuleModal() {
+    document.getElementById('add-rule-modal').classList.add('hidden');
+    document.getElementById('add-rule-modal').classList.remove('flex');
+    // Clear form
+    document.getElementById('rule-name').value = '';
+    document.getElementById('rule-patterns').value = '';
+    document.getElementById('rule-responses').value = '';
+    document.getElementById('rule-priority').value = '50';
+}
+
+async function saveRule() {
+    const name = document.getElementById('rule-name').value.trim();
+    const matchType = document.getElementById('rule-match-type').value;
+    const patterns = document.getElementById('rule-patterns').value.split('\n').filter(p => p.trim());
+    const responses = document.getElementById('rule-responses').value.split('\n').filter(r => r.trim());
+    const priority = parseInt(document.getElementById('rule-priority').value);
+    
+    if (!name || patterns.length === 0 || responses.length === 0) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/rules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                patterns,
+                match_type: matchType,
+                responses,
+                priority
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showToast('Rule created successfully', 'success');
+            hideAddRuleModal();
+            location.reload();
+        } else {
+            showToast(data.detail || 'Failed to create rule', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to create rule', 'error');
+    }
+}
+
+async function deleteRule(ruleName) {
+    if (!confirm(`Delete rule "${ruleName}"?`)) return;
+    
+    try {
+        const response = await fetch(`/api/rules/${encodeURIComponent(ruleName)}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showToast('Rule deleted', 'success');
+            location.reload();
+        } else {
+            showToast(data.detail || 'Failed to delete rule', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to delete rule', 'error');
+    }
+}
+</script>
+{% endblock %}

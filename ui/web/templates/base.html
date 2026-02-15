@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SMS AI Agent{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .htmx-request .htmx-indicator { display: inline-block; }
+        .htmx-indicator { display: none; }
+        .sidebar-link.active { background-color: rgb(59 130 246); color: white; }
+        .card { transition: all 0.2s ease; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1); }
+        .status-dot { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="h-full bg-gray-900 text-gray-100">
+    <div class="min-h-full flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 flex flex-col">
+            <div class="p-4 border-b border-gray-700">
+                <h1 class="text-xl font-bold text-blue-400">
+                    <i class="fas fa-robot mr-2"></i>SMS AI Agent
+                </h1>
+                <p class="text-xs text-gray-500 mt-1">v1.0.0</p>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="/" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 {% if page == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt w-5"></i>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/messages" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 {% if page == 'messages' %}active{% endif %}">
+                    <i class="fas fa-comments w-5"></i>
+                    <span class="ml-3">Messages</span>
+                </a>
+                <a href="/settings" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 {% if page == 'settings' %}active{% endif %}">
+                    <i class="fas fa-cog w-5"></i>
+                    <span class="ml-3">Settings</span>
+                </a>
+                <a href="/rules" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 {% if page == 'rules' %}active{% endif %}">
+                    <i class="fas fa-list-check w-5"></i>
+                    <span class="ml-3">Rules</span>
+                </a>
+                <a href="/personality" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 {% if page == 'personality' %}active{% endif %}">
+                    <i class="fas fa-brain w-5"></i>
+                    <span class="ml-3">AI Personality</span>
+                </a>
+                <a href="/logs" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 {% if page == 'logs' %}active{% endif %}">
+                    <i class="fas fa-scroll w-5"></i>
+                    <span class="ml-3">Logs</span>
+                </a>
+                <a href="/test" class="sidebar-link flex items-center px-4 py-2 rounded-lg hover:bg-gray-700 {% if page == 'test' %}active{% endif %}">
+                    <i class="fas fa-flask w-5"></i>
+                    <span class="ml-3">Test</span>
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t border-gray-700">
+                <div class="flex items-center text-sm text-gray-500">
+                    <span class="status-dot w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    <span>System Active</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-1 p-8 overflow-auto">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+    
+    <script>
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-green-600',
+                error: 'bg-red-600',
+                info: 'bg-blue-600',
+                warning: 'bg-yellow-600'
+            };
+            
+            toast.className = `${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2`;
+            toast.innerHTML = `<span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // HTMX event handlers
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            showToast('An error occurred', 'error');
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

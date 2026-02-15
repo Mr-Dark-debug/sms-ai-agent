@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - SMS AI Agent{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">System Logs</h1>
+        <div class="flex gap-4">
+            <select id="log-type" onchange="changeLogType()" class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg">
+                <option value="llm" {% if log_type == 'llm' %}selected{% endif %}>LLM Requests</option>
+                <option value="guardrail" {% if log_type == 'guardrail' %}selected{% endif %}>Guardrail Violations</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Logs -->
+    <div class="bg-gray-800 rounded-xl overflow-hidden">
+        {% if logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-left text-gray-400 text-sm bg-gray-750">
+                        <th class="px-6 py-4">Timestamp</th>
+                        {% if log_type == 'llm' %}
+                        <th class="px-6 py-4">Provider</th>
+                        <th class="px-6 py-4">Model</th>
+                        <th class="px-6 py-4">Tokens</th>
+                        <th class="px-6 py-4">Latency</th>
+                        <th class="px-6 py-4">Status</th>
+                        {% else %}
+                        <th class="px-6 py-4">Phone</th>
+                        <th class="px-6 py-4">Violation Type</th>
+                        <th class="px-6 py-4">Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for log in logs %}
+                    <tr class="hover:bg-gray-750">
+                        <td class="px-6 py-4 text-gray-400 text-sm">{{ log.timestamp }}</td>
+                        {% if log_type == 'llm' %}
+                        <td class="px-6 py-4">{{ log.provider }}</td>
+                        <td class="px-6 py-4 font-mono text-xs">{{ log.model }}</td>
+                        <td class="px-6 py-4">{{ log.tokens_used }}</td>
+                        <td class="px-6 py-4">{{ log.latency_ms }}ms</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded
+                                {% if log.status == 'success' %}bg-green-600
+                                {% elif log.status == 'error' %}bg-red-600
+                                {% else %}bg-yellow-600{% endif %}">
+                                {{ log.status }}
+                            </span>
+                        </td>
+                        {% else %}
+                        <td class="px-6 py-4 font-mono text-sm">{{ log.phone_number or 'N/A' }}</td>
+                        <td class="px-6 py-4">{{ log.violation_type }}</td>
+                        <td class="px-6 py-4">{{ log.action_taken }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-scroll text-4xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400">No logs found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function changeLogType() {
+    const logType = document.getElementById('log-type').value;
+    window.location.href = `/logs?log_type=${logType}`;
+}
+</script>
+{% endblock %}

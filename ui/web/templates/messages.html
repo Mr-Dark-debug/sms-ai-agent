@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - SMS AI Agent{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Messages</h1>
+        <div class="flex gap-4">
+            <select id="direction-filter" onchange="filterMessages()" class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg">
+                <option value="">All Directions</option>
+                <option value="incoming" {% if filters.direction == 'incoming' %}selected{% endif %}>Incoming</option>
+                <option value="outgoing" {% if filters.direction == 'outgoing' %}selected{% endif %}>Outgoing</option>
+            </select>
+            <input type="text" id="phone-filter" placeholder="Filter by phone..." value="{{ filters.phone or '' }}" 
+                   class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg" onchange="filterMessages()">
+        </div>
+    </div>
+    
+    <!-- Messages Table -->
+    <div class="bg-gray-800 rounded-xl overflow-hidden">
+        {% if messages %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-left text-gray-400 text-sm bg-gray-750">
+                        <th class="px-6 py-4">Direction</th>
+                        <th class="px-6 py-4">Phone Number</th>
+                        <th class="px-6 py-4">Message</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for msg in messages %}
+                    <tr class="hover:bg-gray-750">
+                        <td class="px-6 py-4">
+                            {% if msg.direction == 'incoming' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-600">
+                                <i class="fas fa-arrow-down mr-1"></i> Incoming
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-green-600">
+                                <i class="fas fa-arrow-up mr-1"></i> Outgoing
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 font-mono text-sm">{{ msg.phone_number }}</td>
+                        <td class="px-6 py-4">
+                            <div class="max-w-md truncate" title="{{ msg.message }}">
+                                {{ msg.message }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded
+                                {% if msg.status == 'sent' %}bg-green-600
+                                {% elif msg.status == 'failed' %}bg-red-600
+                                {% elif msg.status == 'delivered' %}bg-blue-600
+                                {% else %}bg-yellow-600{% endif %}">
+                                {{ msg.status|title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-400 text-sm">{{ msg.timestamp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-700 flex justify-between items-center">
+            <span class="text-gray-400 text-sm">Showing {{ messages|length }} messages</span>
+            <div class="flex gap-2">
+                {% if offset > 0 %}
+                <a href="?offset={{ offset - limit }}&limit={{ limit }}&phone={{ filters.phone }}&direction={{ filters.direction }}"
+                   class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">Previous</a>
+                {% endif %}
+                {% if messages|length == limit %}
+                <a href="?offset={{ offset + limit }}&limit={{ limit }}&phone={{ filters.phone }}&direction={{ filters.direction }}"
+                   class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-inbox text-4xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400">No messages found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function filterMessages() {
+    const direction = document.getElementById('direction-filter').value;
+    const phone = document.getElementById('phone-filter').value;
+    let url = '/messages?';
+    if (direction) url += `direction=${direction}&`;
+    if (phone) url += `phone=${encodeURIComponent(phone)}&`;
+    window.location.href = url;
+}
+</script>
+{% endblock %}

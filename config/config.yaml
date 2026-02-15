@@ -1,0 +1,119 @@
+# SMS AI Agent Configuration
+# ==========================
+# Main configuration file for the SMS AI Agent system.
+# Edit this file to customize behavior, or use the Web UI.
+
+# Application Settings
+app_name: "SMS AI Agent"
+version: "1.0.0"
+debug: false
+
+# LLM Provider Configuration
+llm:
+  # Provider: "openrouter" or "ollama"
+  provider: "openrouter"
+  
+  # Model identifier
+  # Use "openrouter/free" to randomly select from FREE models
+  # (recommended for zero-cost usage)
+  # Other free models include:
+  #   - meta-llama/llama-3.3-70b-instruct:free
+  #   - openai/gpt-4o-mini (limited free)
+  #   - anthropic/claude-3.5-sonnet (limited free)
+  # Ollama examples (local, no API cost):
+  #   - llama3
+  #   - mistral
+  #   - gemma
+  model: "openrouter/free"
+  
+  # API key is loaded from environment variable OPENROUTER_API_KEY
+  # or SMS_AGENT_LLM_API_KEY, or stored in .env file
+  api_key: ""
+  
+  # API base URL (default for OpenRouter)
+  api_base: "https://openrouter.ai/api/v1"
+  
+  # Generation parameters
+  temperature: 0.7          # 0.0 - 2.0, higher = more creative
+  max_tokens: 150           # Maximum response length in tokens
+  top_p: 0.9               # Nucleus sampling parameter
+  
+  # Ollama-specific settings (if using Ollama)
+  ollama_host: "http://localhost:11434"
+  
+  # Behavior settings
+  fallback_to_rules: true   # Use rules if LLM fails
+  timeout: 30               # Request timeout in seconds
+
+# SMS Handling Configuration
+sms:
+  # Auto-response settings
+  auto_reply_enabled: true
+  ai_mode_enabled: true
+  
+  # SMS constraints
+  max_response_length: 300  # SMS character limit
+  truncate_message: "..."   # Truncation indicator
+  
+  # Filtering
+  ignored_numbers: []       # Numbers to ignore
+  allowed_numbers: []       # Empty = all allowed
+  
+  # Termux API settings
+  termux_api_path: "termux-sms-send"
+  sms_timeout: 10
+
+# Rate Limiting Configuration
+rate_limit:
+  # Global limits (per minute)
+  max_messages_per_minute: 10
+  
+  # Per-recipient limits
+  max_per_recipient_per_hour: 5
+  max_per_recipient_per_day: 20
+  
+  # Cooldown between messages (seconds)
+  min_interval_seconds: 5.0
+  
+  # Burst settings
+  burst_allowance: 3
+  burst_window_seconds: 60
+
+# Guardrail Configuration
+guardrail:
+  # Content filtering
+  block_personal_info: true
+  block_links: false
+  block_phone_numbers: true
+  block_email_addresses: true
+  
+  # Length constraints
+  max_response_length: 300
+  enforce_length_limit: true
+  
+  # Blocked patterns (regex)
+  blocked_patterns:
+    - "password"
+    - "credit card"
+    - "social security"
+    - "bank account"
+  
+  # Allowed response patterns
+  require_polite_tone: true
+
+# User Interface Configuration
+ui:
+  # Web UI settings
+  web_enabled: true
+  web_host: "127.0.0.1"
+  web_port: 8080
+  web_debug: false
+  
+  # Terminal UI settings
+  tui_enabled: true
+  tui_theme: "dark"
+  tui_refresh_rate: 1       # seconds
+  
+  # Display settings
+  log_lines: 100
+  show_timestamps: true

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Test - SMS AI Agent{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Test Message Simulator</h1>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Input -->
+        <div class="bg-gray-800 p-6 rounded-xl">
+            <h2 class="text-lg font-bold mb-4">Incoming Message</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Phone Number</label>
+                    <input type="text" id="test-phone" value="+1234567890" 
+                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Message</label>
+                    <textarea id="test-message" rows="4" placeholder="Enter a test message..."
+                              class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg"></textarea>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="use-ai" class="w-4 h-4 bg-gray-700 border-gray-600 rounded">
+                        <span class="text-sm">Use AI (if available)</span>
+                    </label>
+                </div>
+                
+                <button onclick="runTest()" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
+                    <i class="fas fa-play mr-2"></i>Generate Response
+                </button>
+            </div>
+        </div>
+        
+        <!-- Output -->
+        <div class="bg-gray-800 p-6 rounded-xl">
+            <h2 class="text-lg font-bold mb-4">Response</h2>
+            
+            <div id="response-container" class="space-y-4">
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-paper-plane text-4xl mb-4"></i>
+                    <p>Enter a message and click "Generate Response"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Test Messages -->
+    <div class="bg-gray-800 p-6 rounded-xl">
+        <h2 class="text-lg font-bold mb-4">Quick Test Messages</h2>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="quickTest('Hello!')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Hello!</button>
+            <button onclick="quickTest('How are you?')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">How are you?</button>
+            <button onclick="quickTest('Thank you!')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Thank you!</button>
+            <button onclick="quickTest('Goodbye!')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Goodbye!</button>
+            <button onclick="quickTest('Help me please')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Help me please</button>
+            <button onclick="quickTest('What time is it?')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">What time is it?</button>
+        </div>
+    </div>
+    
+    <!-- Rules Preview -->
+    <div class="bg-gray-800 p-6 rounded-xl">
+        <h2 class="text-lg font-bold mb-4">Active Rules</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for rule in rules[:6] %}
+            <div class="bg-gray-750 p-4 rounded-lg">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-medium">{{ rule.name }}</h3>
+                    <span class="text-xs text-gray-500">{{ rule.match_type }}</span>
+                </div>
+                <p class="text-xs text-gray-400">{{ rule.patterns|join(', ')[:50] }}{% if rule.patterns|join(', ')|length > 50 %}...{% endif %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+function quickTest(message) {
+    document.getElementById('test-message').value = message;
+    runTest();
+}
+
+async function runTest() {
+    const message = document.getElementById('test-message').value.trim();
+    const phone = document.getElementById('test-phone').value.trim();
+    const useAi = document.getElementById('use-ai').checked;
+    
+    if (!message) {
+        showToast('Please enter a message', 'error');
+        return;
+    }
+    
+    const container = document.getElementById('response-container');
+    container.innerHTML = `
+        <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4"></i>
+            <p class="text-gray-400">Generating response...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/api/test-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: message,
+                phone_number: phone,
+                use_ai: useAi
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            let violationsHtml = '';
+            if (data.guardrail_violations && data.guardrail_violations.length > 0) {
+                violationsHtml = `
+                    <div class="mt-4 p-3 bg-yellow-900/50 border border-yellow-700 rounded-lg">
+                        <h4 class="font-medium text-yellow-400 mb-2">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Guardrail Warnings
+                        </h4>
+                        <ul class="text-sm text-yellow-200">
+                            ${data.guardrail_violations.map(v => `<li>• ${v.type}: ${v.action}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = `
+                <div class="bg-gray-900 p-4 rounded-lg mb-4">
+                    <p class="text-lg">${data.response}</p>
+                    <p class="text-xs text-gray-500 mt-2">${data.response.length} characters</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="bg-gray-750 p-3 rounded-lg">
+                        <p class="text-gray-400">Source</p>
+                        <p class="font-medium ${data.source === 'ai' ? 'text-blue-400' : data.source === 'rules' ? 'text-green-400' : 'text-yellow-400'}">
+                            ${data.source.toUpperCase()}
+                        </p>
+                    </div>
+                    <div class="bg-gray-750 p-3 rounded-lg">
+                        <p class="text-gray-400">Latency</p>
+                        <p class="font-medium">${data.latency_ms}ms</p>
+                    </div>
+                    ${data.model ? `
+                    <div class="bg-gray-750 p-3 rounded-lg">
+                        <p class="text-gray-400">Model</p>
+                        <p class="font-medium font-mono text-xs">${data.model}</p>
+                    </div>
+                    <div class="bg-gray-750 p-3 rounded-lg">
+                        <p class="text-gray-400">Tokens</p>
+                        <p class="font-medium">${data.tokens_used}</p>
+                    </div>
+                    ` : ''}
+                    ${data.matched_rule ? `
+                    <div class="bg-gray-750 p-3 rounded-lg col-span-2">
+                        <p class="text-gray-400">Matched Rule</p>
+                        <p class="font-medium">${data.matched_rule}</p>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                ${violationsHtml}
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-8 text-red-400">
+                    <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                    <p>${data.detail || 'Failed to generate response'}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-red-400">
+                <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                <p>Failed to connect to server</p>
+            </div>
+        `;
+    }
+}
+</script>
+{% endblock %}
