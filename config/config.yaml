@@ -64,19 +64,20 @@ sms:
   sms_timeout: 10
 
 # Rate Limiting Configuration
+# (Set to high values or disable if needed)
 rate_limit:
   # Global limits (per minute)
-  max_messages_per_minute: 10
+  max_messages_per_minute: 1000
   
   # Per-recipient limits
-  max_per_recipient_per_hour: 5
-  max_per_recipient_per_day: 20
+  max_per_recipient_per_hour: 100
+  max_per_recipient_per_day: 1000
   
-  # Cooldown between messages (seconds)
-  min_interval_seconds: 5.0
+  # Cooldown between messages (seconds) - set to 0 to disable
+  min_interval_seconds: 0
   
   # Burst settings
-  burst_allowance: 3
+  burst_allowance: 100
   burst_window_seconds: 60
 
 # Guardrail Configuration

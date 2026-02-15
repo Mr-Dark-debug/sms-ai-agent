@@ -101,18 +101,18 @@ class RateLimitConfig:
     Defines rate limits to prevent abuse and ensure fair usage
     of the auto-responder system.
     """
-    # Global limits (per minute)
-    max_messages_per_minute: int = 10
+    # Global limits (per minute) - set to high value to disable
+    max_messages_per_minute: int = 1000
     
-    # Per-recipient limits
-    max_per_recipient_per_hour: int = 5
-    max_per_recipient_per_day: int = 20
+    # Per-recipient limits - set to high value to disable
+    max_per_recipient_per_hour: int = 100
+    max_per_recipient_per_day: int = 1000
     
-    # Cooldown between messages (seconds)
-    min_interval_seconds: float = 5.0
+    # Cooldown between messages (seconds) - set to 0 to disable
+    min_interval_seconds: float = 0.0
     
     # Burst settings
-    burst_allowance: int = 3
+    burst_allowance: int = 100
     burst_window_seconds: int = 60
     
     def validate(self) -> None:
