@@ -493,13 +493,11 @@ class SMSAgentApp(App):
         text-align: center;
         color: $primary;
         text-style: bold;
-        text-size: 120%;
     }
     
     .title {
         text-style: bold;
         color: $accent;
-        text-size: 110%;
         margin: 1 0;
     }
     
@@ -516,20 +514,17 @@ class SMSAgentApp(App):
     
     .card-title {
         color: $text-muted;
-        text-size: 85%;
         padding: 0 1;
     }
     
     .card-value {
         color: $text;
         text-style: bold;
-        text-size: 110%;
         padding: 0 1;
     }
     
     .card-status {
         color: $success;
-        text-size: 80%;
         padding: 0 1;
     }
     
