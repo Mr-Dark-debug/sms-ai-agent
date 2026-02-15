@@ -135,9 +135,26 @@ def create_app(
     def handle_incoming_sms(msg):
         logger.info(f"Web listener: Received message from {msg.phone_number}")
         
-        # Check if we already responded to this message content from this number (idempotency)
-        if database.was_message_responded(msg.phone_number, msg.message):
+        # Clean the message content
+        content = msg.message.strip()
+        if content.startswith("Sent:"):
+            content = content[5:].strip()
+        elif content.startswith("Delivered:"):
+            content = content[10:].strip()
+            
+        if not content:
+            logger.info("Web listener: Message empty after cleaning, skipping.")
+            return
+
+        # Check if we already responded to this exact message content (idempotency)
+        if database.was_message_responded(msg.phone_number, content):
             logger.info(f"Web listener: Already responded to this message from {msg.phone_number}, skipping.")
+            return
+
+        # Check if message is an echo of our own last message
+        last_msgs = database.get_messages(phone_number=msg.phone_number, limit=1)
+        if last_msgs and last_msgs[0]['direction'] == 'outgoing' and last_msgs[0]['message'] == content:
+            logger.info(f"Web listener: Detected echo of our own message, skipping.")
             return
 
         # Check rate limit
@@ -150,7 +167,7 @@ def create_app(
         msg_id = database.add_message(
             direction="incoming",
             phone_number=msg.phone_number,
-            message=msg.message,
+            message=content,
             status="delivered"
         )
         
@@ -159,7 +176,7 @@ def create_app(
             return
         
         # Generate response
-        response = ai_responder.respond(msg.message, msg.phone_number)
+        response = ai_responder.respond(content, msg.phone_number)
         
         if response.response:
             logger.info(f"Web listener: AI generated response for {msg.phone_number}: '{response.response[:30]}...'")

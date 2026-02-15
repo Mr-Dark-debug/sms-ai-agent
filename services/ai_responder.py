@@ -370,7 +370,9 @@ class AIResponder:
             if contact.get("custom_prompt"):
                 system_content += f"\n- Special Note: {contact['custom_prompt']}"
         
-        system_content += f"\n\nToday's Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        system_content += f"\n\n### CURRENT CONTEXT"
+        system_content += f"\n- Date & Time: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        system_content += f"\n- Current Year: {datetime.now().year}"
         
         messages.append(Message(role="system", content=system_content))
         

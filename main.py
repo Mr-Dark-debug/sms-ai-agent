@@ -597,9 +597,26 @@ def run_daemon(config: Config) -> None:
     def handle_message(msg):
         logger.info(f"Daemon: Received message from {msg.phone_number}: {msg.message[:50]}")
         
+        # Clean the message content
+        content = msg.message.strip()
+        if content.startswith("Sent:"):
+            content = content[5:].strip()
+        elif content.startswith("Delivered:"):
+            content = content[10:].strip()
+            
+        if not content:
+            logger.info("Daemon: Message empty after cleaning, skipping.")
+            return
+
         # Check if we already responded to this message content from this number (idempotency)
-        if database.was_message_responded(msg.phone_number, msg.message):
+        if database.was_message_responded(msg.phone_number, content):
             logger.info(f"Daemon: Already responded to this message from {msg.phone_number}, skipping.")
+            return
+
+        # Check if message is an echo of our own last message
+        last_msgs = database.get_messages(phone_number=msg.phone_number, limit=1)
+        if last_msgs and last_msgs[0]['direction'] == 'outgoing' and last_msgs[0]['message'] == content:
+            logger.info(f"Daemon: Detected echo of our own message, skipping.")
             return
 
         # Check rate limit
@@ -616,11 +633,11 @@ def run_daemon(config: Config) -> None:
         database.add_message(
             direction="incoming",
             phone_number=msg.phone_number,
-            message=msg.message
+            message=content
         )
         
         # Generate response
-        response = ai_responder.respond(msg.message, msg.phone_number)
+        response = ai_responder.respond(content, msg.phone_number)
         
         if response.response:
             logger.info(f"Daemon: AI generated response for {msg.phone_number}: '{response.response[:30]}...'")
