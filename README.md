@@ -1,7 +1,7 @@
 # SMS AI Agent
 
 <div align="center">
-  <img src="banner.svg" alt="SMS AI Agent Banner" width="800">
+  <img src="banner.svg" alt="SMS AI Agent Banner" width="100%">
 </div>
 
 > **IMPORTANT: Termux:API Setup Required**
