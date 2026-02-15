@@ -282,7 +282,13 @@ def run_status_check(config: Config) -> None:
     # Check SMS
     print("SMS Handler")
     print("-" * 30)
-    sms_handler = SMSHandler()
+    sms_handler = SMSHandler(
+        webhook_config={
+            "enabled": config.sms.webhook_enabled,
+            "url": config.sms.webhook_url,
+            "headers": config.sms.webhook_headers
+        }
+    )
     if sms_handler.is_available:
         print("  Status: ✓ Available")
         info = sms_handler.get_device_info()
@@ -353,7 +359,14 @@ def run_send_sms(config: Config, phone_number: str, message: str) -> None:
     print(f"Message: {message}")
     print("-" * 50)
     
-    sms_handler = SMSHandler(timeout=config.sms.sms_timeout)
+    sms_handler = SMSHandler(
+        timeout=config.sms.sms_timeout,
+        webhook_config={
+            "enabled": config.sms.webhook_enabled,
+            "url": config.sms.webhook_url,
+            "headers": config.sms.webhook_headers
+        }
+    )
     
     if not sms_handler.is_available:
         print("✗ SMS handler not available!")
@@ -542,7 +555,14 @@ def run_daemon(config: Config) -> None:
         max_per_recipient_per_day=config.rate_limit.max_per_recipient_per_day
     )
     
-    sms_handler = SMSHandler(timeout=config.sms.sms_timeout)
+    sms_handler = SMSHandler(
+        timeout=config.sms.sms_timeout,
+        webhook_config={
+            "enabled": config.sms.webhook_enabled,
+            "url": config.sms.webhook_url,
+            "headers": config.sms.webhook_headers
+        }
+    )
     ai_responder = AIResponder(
         config=config,
         database=database,

@@ -1,5 +1,34 @@
 # SMS AI Agent
 
+```text
+ ___________________________________________________________
+|  _______________________________________________________  |
+| |                                                       | |
+| |   _____ __  __ ____        _    ___      _    ____    | |
+| |  / ___/|  \/  / ___|      / \  |_ _|    / \  / ___|   | |
+| |  \___ \| |\/| \___ \     / _ \  | |    / _ \ \___ \   | |
+| |   ___) | |  | |___) |   / ___ \ | |   / ___ \ ___) |  | |
+| |  |____/|_|  |_|____/   /_/   \_\___| /_/   \_\____/   | |
+| |                                                       | |
+| |      ____  _____ _   _ _____ _   _ _____              | |
+| |     / ___|| ____| \ | | ____| \ | |_   _|             | |
+| |    | |  _ |  _| |  \| |  _| |  \| | | |               | |
+| |    | |_| || |___| |\  | |___| |\  | | |               | |
+| |     \____||_____|_| \_|_____|_| \_| |_|               | |
+| |                                                       | |
+| |_______________________________________________________| |
+|___________________________________________________________|
+```
+
+> **IMPORTANT: Termux:API Setup Required**
+> For this agent to read or send SMS, you **MUST** install the Termux:API components:
+> 1. **Download App**: Install the **Termux:API Android App** from [F-Droid](https://f-droid.org/en/packages/com.termux.api/) or the [Google Play Store](https://play.google.com/store/apps/details?id=com.termux.api).
+> 2. **Install Package**: Run `pkg install termux-api` inside your Termux terminal.
+> 3. **Grant Permissions**: Go to Android Settings → Apps → Termux:API → Permissions and enable **SMS, Phone, and Storage**.
+> 4. **Disable Battery Optimization**: Ensure battery optimization is disabled for both Termux and Termux:API to prevent the background service from being killed.
+
+---
+
 **A production-ready, Termux-based SMS auto-responder with AI capabilities**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

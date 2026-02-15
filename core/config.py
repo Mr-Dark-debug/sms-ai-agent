@@ -85,6 +85,11 @@ class SMSConfig:
     termux_api_path: str = "termux-sms-send"
     sms_timeout: int = 10
     
+    # Webhook settings
+    webhook_enabled: bool = False
+    webhook_url: str = ""
+    webhook_headers: Dict[str, str] = field(default_factory=dict)
+    
     def validate(self) -> None:
         """Validate SMS configuration parameters."""
         if self.max_response_length < 1 or self.max_response_length > 1600:
@@ -434,6 +439,8 @@ def _apply_env_overrides(config: Config) -> None:
         # SMS settings
         "SMS_AGENT_SMS_AUTO_REPLY_ENABLED": ("sms", "auto_reply_enabled", bool),
         "SMS_AGENT_SMS_AI_MODE_ENABLED": ("sms", "ai_mode_enabled", bool),
+        "SMS_AGENT_SMS_WEBHOOK_ENABLED": ("sms", "webhook_enabled", bool),
+        "SMS_AGENT_SMS_WEBHOOK_URL": ("sms", "webhook_url"),
         
         # UI settings
         "SMS_AGENT_UI_WEB_HOST": ("ui", "web_host"),

@@ -15,9 +15,12 @@ import json
 import re
 import hashlib
 import time
+import shutil
+import httpx
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass, field
+import threading
 
 from core.exceptions import SMSError
 from core.logging import get_logger
@@ -116,7 +119,8 @@ class SMSHandler:
         self,
         termux_api_path: str = "termux-sms-send",
         termux_list_path: str = "termux-sms-list",
-        timeout: int = 30
+        timeout: int = 30,
+        webhook_config: Optional[Dict[str, Any]] = None
     ):
         """
         Initialize SMS handler.
@@ -125,10 +129,12 @@ class SMSHandler:
             termux_api_path: Path to termux-sms-send command
             termux_list_path: Path to termux-sms-list command
             timeout: Command timeout in seconds
+            webhook_config: Configuration for webhooks (enabled, url, headers)
         """
         self.termux_api_path = termux_api_path
         self.termux_list_path = termux_list_path
         self.timeout = timeout
+        self.webhook_config = webhook_config or {"enabled": False, "url": "", "headers": {}}
         
         # Callbacks for incoming messages
         self._callbacks: List[Callable[[SMSMessage], None]] = []
@@ -151,13 +157,8 @@ class SMSHandler:
             True if Termux API commands are available and SMS permissions granted
         """
         try:
-            # First check if termux-api commands exist
-            result = subprocess.run(
-                ["which", "termux-sms-list"],
-                capture_output=True,
-                timeout=5
-            )
-            if result.returncode != 0:
+            # First check if termux-api commands exist using shutil.which
+            if not shutil.which("termux-sms-list"):
                 logger.error("termux-sms-list command not found")
                 return False
             
@@ -180,25 +181,14 @@ class SMSHandler:
                 return False
             
             # Also verify we can send (different permission)
-            try:
-                send_check = subprocess.run(
-                    ["which", "termux-sms-send"],
-                    capture_output=True,
-                    timeout=5
-                )
-                if send_check.returncode != 0:
-                    logger.warning("termux-sms-send not found")
-            except Exception:
-                pass
+            if not shutil.which("termux-sms-send"):
+                logger.warning("termux-sms-send not found")
             
             logger.info("SMS permissions verified successfully")
             return True
             
         except subprocess.TimeoutExpired:
             logger.error("Availability check timed out")
-            return False
-        except FileNotFoundError:
-            logger.error("Termux API commands not found")
             return False
         except Exception as e:
             logger.error(f"Availability check failed: {e}")
@@ -213,7 +203,8 @@ class SMSHandler:
         self,
         phone_number: str,
         message: str,
-        sim_slot: Optional[int] = None
+        sim_slot: Optional[int] = None,
+        callback_url: Optional[str] = None
     ) -> bool:
         """
         Send an SMS message.
@@ -222,6 +213,7 @@ class SMSHandler:
             phone_number: Recipient phone number
             message: Message content
             sim_slot: SIM slot to use (0 or 1, optional)
+            callback_url: URL to notify of delivery status
             
         Returns:
             True if message was sent successfully
@@ -260,10 +252,15 @@ class SMSHandler:
                 timeout=self.timeout
             )
             
+            status = "sent" if result.returncode == 0 else "failed"
+            error_msg = result.stderr.strip() if result.returncode != 0 else None
+            
+            if callback_url:
+                self._report_delivery_status(callback_url, phone_number, status, error_msg)
+            
             if result.returncode != 0:
-                error_msg = result.stderr.strip() or "Unknown error"
                 raise SMSError(
-                    f"Failed to send SMS: {error_msg}",
+                    f"Failed to send SMS: {error_msg or 'Unknown error'}",
                     details={"phone": phone_number, "returncode": result.returncode}
                 )
             
@@ -271,6 +268,8 @@ class SMSHandler:
             return True
         
         except subprocess.TimeoutExpired:
+            if callback_url:
+                self._report_delivery_status(callback_url, phone_number, "timeout", "Command timed out")
             raise SMSError(
                 "SMS send command timed out",
                 details={"timeout": self.timeout}
@@ -281,6 +280,27 @@ class SMSHandler:
                 f"Termux API command not found: {self.termux_api_path}",
                 details={"hint": "Install termux-api package: pkg install termux-api"}
             )
+
+    def _report_delivery_status(self, url: str, phone: str, status: str, error: Optional[str] = None) -> None:
+        """Report SMS delivery status via callback URL."""
+        try:
+            payload = {
+                "phone_number": phone,
+                "status": status,
+                "timestamp": datetime.now().isoformat(),
+                "error": error
+            }
+            # Run in background to not block SMS sending
+            def send_report():
+                try:
+                    with httpx.Client(timeout=10.0) as client:
+                        client.post(url, json=payload)
+                except Exception as e:
+                    logger.error(f"Failed to send delivery status report: {e}")
+            
+            threading.Thread(target=send_report, daemon=True).start()
+        except Exception as e:
+            logger.error(f"Error initializing delivery status report: {e}")
     
     def list_messages(
         self,
@@ -466,6 +486,9 @@ class SMSHandler:
                                 f"NEW SMS DETECTED: From {msg.phone_number} - "
                                 f"'{msg.message[:30]}{'...' if len(msg.message) > 30 else ''}'"
                             )
+                            # Trigger webhook if enabled
+                            if self.webhook_config.get("enabled"):
+                                self._trigger_webhook(msg)
                 
                 # Process new messages through callbacks
                 if new_incoming:
@@ -488,7 +511,24 @@ class SMSHandler:
             
             # Wait before next poll
             time.sleep(poll_interval)
-    
+
+    def _trigger_webhook(self, message: SMSMessage) -> None:
+        """Trigger external webhook for incoming message."""
+        url = self.webhook_config.get("url")
+        if not url:
+            return
+            
+        def send_webhook():
+            try:
+                headers = self.webhook_config.get("headers", {})
+                with httpx.Client(timeout=10.0) as client:
+                    client.post(url, json=message.to_dict(), headers=headers)
+                logger.info(f"Webhook triggered successfully for message from {message.phone_number}")
+            except Exception as e:
+                logger.error(f"Webhook trigger failed: {e}")
+                
+        threading.Thread(target=send_webhook, daemon=True).start()
+
     def diagnose(self) -> Dict[str, Any]:
         """
         Run diagnostic checks for SMS functionality.
@@ -507,8 +547,7 @@ class SMSHandler:
         
         # Check 1: termux-sms-list exists
         try:
-            check = subprocess.run(["which", "termux-sms-list"], capture_output=True, timeout=5)
-            results["termux_api_installed"] = check.returncode == 0
+            results["termux_api_installed"] = bool(shutil.which("termux-sms-list"))
         except Exception as e:
             results["errors"].append(f"API check failed: {e}")
         
@@ -541,8 +580,7 @@ class SMSHandler:
         
         # Check 3: termux-sms-send exists
         try:
-            check = subprocess.run(["which", "termux-sms-send"], capture_output=True, timeout=5)
-            results["sms_send_available"] = check.returncode == 0
+            results["sms_send_available"] = bool(shutil.which("termux-sms-send"))
         except Exception as e:
             results["errors"].append(f"Send check failed: {e}")
         

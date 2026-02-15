@@ -5,6 +5,7 @@
 # Core Dependencies
 # -----------------
 pyyaml>=6.0.1              # YAML configuration parsing
+httpx>=0.25.0              # HTTP client for webhooks and LLM
 
 # Web UI Dependencies
 # -------------------
